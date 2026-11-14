@@ -1,5 +1,5 @@
-// Node: "Risk Score"  (Code node, mode: Run Once for All Items)
-// Input : output node "Check History" (exact_dup, near_dup, prior_rejected, prior_ok)
+// Node: "Skor Risiko"  (Code node, mode: Run Once for All Items)
+// Input : output node "Cek Riwayat" (exact_dup, near_dup, prior_rejected, prior_ok)
 // Output: pesanan + skor risiko, level, alasan, tag klasifikasi, dan apakah perlu AI.
 // Semua aturan bersifat pasti (deterministik) supaya keputusan bisa dijelaskan dan diaudit.
 
@@ -10,7 +10,7 @@ const LEVEL_MEDIUM = 30;
 const LEVEL_HIGH = 60;
 const DISPOSABLE = ['mailinator.com', 'tempmail.com', '10minutemail.com', 'guerrillamail.com', 'yopmail.com', 'trashmail.com'];
 
-const o = $('Normalize').first().json;
+const o = $('Normalisasi').first().json;
 const h = $input.first().json;
 const hist = {
   near_dup: Number(h.near_dup) || 0,

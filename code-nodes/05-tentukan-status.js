@@ -1,6 +1,6 @@
-// Node: "Decide Status"  (Code node, mode: Run Once for All Items)
-// Input : dari "Risk Score" (risiko LOW, tanpa AI) ATAU dari "Parse AI"
-// Output: status akhir, parameter untuk query "Save Order", dan teks notifikasi Telegram.
+// Node: "Tentukan Status"  (Code node, mode: Run Once for All Items)
+// Input : dari "Skor Risiko" (risiko LOW, tanpa AI) ATAU dari "Parse AI"
+// Output: status akhir, parameter untuk query "Simpan Pesanan", dan teks notifikasi Telegram.
 //
 // Aturan keputusan:
 //   LOW                                   -> APPROVED_AUTO (oleh rules)

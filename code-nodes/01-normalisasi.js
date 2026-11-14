@@ -1,4 +1,4 @@
-// Node: "Normalize"  (Code node, mode: Run Once for All Items)
+// Node: "Normalisasi"  (Code node, mode: Run Once for All Items)
 // Input : output node "Webhook Order" ({ headers, params, query, body })
 // Output: satu item pesanan dengan format seragam + hasil validasi.
 // Menerima dua format: payload generik (lihat test/orders) dan payload webhook Shopify (orders/create).

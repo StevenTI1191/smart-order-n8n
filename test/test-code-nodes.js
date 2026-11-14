@@ -31,7 +31,7 @@ const NO_HISTORY = { exact_dup: 0, near_dup: 0, prior_rejected: 0, prior_ok: 0 }
 // Jalankan pipeline sampai "Skor Risiko"
 const score = (file, history = NO_HISTORY) => {
   const n = run('01-normalisasi.js', { body: order(file) });
-  return run('02-skor-risiko.js', history, { Normalize: n });
+  return run('02-skor-risiko.js', history, { Normalisasi: n });
 };
 
 console.log('01 Normalisasi');

@@ -1,5 +1,5 @@
 // Node: "Request AI"  (Code node, mode: Run Once for All Items)
-// Input : output node "Risk Score" (cabang needs_ai = true)
+// Input : output node "Skor Risiko" (cabang needs_ai = true)
 // Output: pesanan + ai_request (body untuk Cloudflare Workers AI)
 // Data pribadi (nama, HP, email, alamat lengkap) TIDAK dikirim ke AI. Yang dikirim hanya fitur risiko.
 

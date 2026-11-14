@@ -12,7 +12,7 @@
           ]
         }
       },
-      "id": "f4e53c54-079d-4a74-b634-fc682439f26b",
+      "id": "8787fb46-9199-4358-84fd-5fb6cb5b4920",
       "name": "Setiap Jam 20.00",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -27,7 +27,7 @@
         "query": "SELECT status,\n       count(*)::int                 AS jumlah,\n       coalesce(sum(total), 0)::bigint AS nilai\n  FROM orders\n WHERE created_at >= now() - interval '1 day'\n GROUP BY status\n ORDER BY status;",
         "options": {}
       },
-      "id": "753e2bd1-58c7-4249-bc69-360a44af3d4a",
+      "id": "49c9098d-6144-43d8-bbd9-eda9377f2fe3",
       "name": "Ringkasan 24 Jam",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
@@ -47,7 +47,7 @@
       "parameters": {
         "jsCode": "// Node: \"Format Laporan\"  (Code node, workflow \"Order Daily Report\", mode: Run Once for All Items)\n// Input : hasil query Q5 \"Ringkasan 24 Jam\" (satu baris per status)\n\nconst rows = $input.all().map((r) => r.json).filter((r) => r.status);\nconst rp = (n) => 'Rp' + Math.round(Number(n) || 0).toLocaleString('id-ID');\nconst jumlah = (s) => rows.filter((r) => s.includes(r.status)).reduce((a, r) => a + Number(r.jumlah), 0);\nconst nilai = (s) => rows.filter((r) => s.includes(r.status)).reduce((a, r) => a + Number(r.nilai), 0);\n\nconst total = jumlah(['APPROVED_AUTO', 'APPROVED_MANUAL', 'PENDING_REVIEW', 'REJECTED']);\nconst auto = jumlah(['APPROVED_AUTO']);\nconst persen = total ? Math.round((auto / total) * 100) : 0;\n\nconst teks = [\n  'Laporan pesanan 24 jam terakhir',\n  `Pesanan masuk: ${total}`,\n  `- Disetujui otomatis: ${auto} (${persen}%)`,\n  `- Disetujui owner: ${jumlah(['APPROVED_MANUAL'])}`,\n  `- Menunggu review: ${jumlah(['PENDING_REVIEW'])}`,\n  `- Ditolak: ${jumlah(['REJECTED'])}`,\n  `Nilai pesanan disetujui: ${rp(nilai(['APPROVED_AUTO', 'APPROVED_MANUAL']))}`,\n].join('\\n');\n\nreturn [{ json: { teks } }];\n"
       },
-      "id": "277876d7-aa9a-48e7-afed-84f998d4f9f8",
+      "id": "4f0d661f-2876-47cc-afdb-340595a0fd67",
       "name": "Format Laporan",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -64,7 +64,7 @@
           "appendAttribution": false
         }
       },
-      "id": "ec2d2dc0-ec6b-44ca-8007-ca18cb2a3473",
+      "id": "61c23b70-2571-4e57-9f26-6d4f15f17807",
       "name": "Kirim Laporan",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,

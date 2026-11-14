@@ -141,7 +141,7 @@ Kolom **Name** di form Header Auth adalah nama header HTTP yang dikirim, bukan n
 
 ## Cara cepat: import file workflow
 
-Folder `workflows/` berisi empat workflow siap import. Nama node di workflow Intake memakai bahasa Inggris dan dikelompokkan dengan 4 sticky note (Intake & validation, Duplicate check, Risk score + AI, Decision & notify). Isinya dibangkitkan oleh `scripts/build_workflows.py` dari `code-nodes/` dan `sql/queries.sql`, jadi selalu sama dengan kode yang diuji.
+Folder `workflows/` berisi empat workflow siap import. Isinya dibangkitkan oleh `scripts/build_workflows.py` dari `code-nodes/` dan `sql/queries.sql`, jadi selalu sama dengan kode yang diuji.
 
 1. Buat dulu keempat credentials di n8n dengan nama **persis** seperti ini: `Webhook Secret`, `Cloudflare AI`, `Orders DB`, `Order Bot`.
 2. Di n8n: **Create workflow** → menu **⋯** (kanan atas) → **Import from File** → pilih `workflows/01-order-intake.json`. Ulangi untuk `03-laporan-harian.json` dan `04-order-api.json`, masing-masing di workflow baru. `02-order-approval.json` hanya diperlukan kalau ingin memutuskan lewat tombol Telegram, bukan lewat website.
@@ -151,7 +151,7 @@ Folder `workflows/` berisi empat workflow siap import. Nama node di workflow Int
    | Workflow | Node | Ganti |
    | --- | --- | --- |
    | Intake | Cloudflare AI | `GANTI_ACCOUNT_ID` di URL dengan Account ID Cloudflare |
-   | Intake | Notify Owner | Chat ID `GANTI_CHAT_ID` dengan chat id Telegram-mu |
+   | Intake | Kirim ke Owner | Chat ID `GANTI_CHAT_ID` dengan chat id Telegram-mu |
    | Laporan Harian | Kirim Laporan | Chat ID `GANTI_CHAT_ID` dengan chat id Telegram-mu |
    | Approval (opsional) | Baca Tombol | `OWNER_IDS = [123456789]` dengan user id Telegram-mu |
 
@@ -167,14 +167,14 @@ Buat workflow baru bernama **Order Intake**. Nama node harus sama persis seperti
 
 ```
 Webhook Order → Normalisasi → Valid?
-   ├─ false → Log Invalid → Reply Invalid
-   └─ true  → Check History → Duplicate?
-                 ├─ true  → Log Duplicate → Reply Duplicate
-                 └─ false → Risk Score → Needs AI?
+   ├─ false → Catat Invalid → Balas Invalid
+   └─ true  → Cek Riwayat → Duplikat?
+                 ├─ true  → Catat Duplikat → Balas Duplikat
+                 └─ false → Skor Risiko → Perlu AI?
                                ├─ true  → Request AI → Cloudflare AI → Parse AI ─┐
                                └─ false ─────────────────────────────────────────┤
                                                                                  ▼
-                                Decide Status → Save Order → Reply Webhook → Needs Review? → Notify Owner
+                                Tentukan Status → Simpan Pesanan → Balas Webhook → Perlu Review? → Kirim ke Owner
 ```
 
 **1. Webhook Order** (Webhook)
@@ -186,30 +186,30 @@ Webhook Order → Normalisasi → Valid?
 
 **3. Valid?** (If) → kondisi Boolean: `{{ $json.valid }}` is true.
 
-**4. Log Invalid** (Postgres, cabang false)
+**4. Catat Invalid** (Postgres, cabang false)
 - Operation: Execute Query, isi dengan **Q3** dari `sql/queries.sql`.
 - Options → Query Parameters: `{{ [$json.order_id || '-', $json.source, 'INVALID', $json.errors.join('; ')] }}`
 
-**5. Reply Invalid** (Respond to Webhook)
+**5. Balas Invalid** (Respond to Webhook)
 - Respond With: JSON, Response Code `422`.
-- Body: `{{ JSON.stringify({ ok: false, errors: $('Normalize').first().json.errors }) }}`
+- Body: `{{ JSON.stringify({ ok: false, errors: $('Normalisasi').first().json.errors }) }}`
 
-**6. Check History** (Postgres, cabang true)
+**6. Cek Riwayat** (Postgres, cabang true)
 - Execute Query dengan **Q1**.
 - Query Parameters: `{{ [$json.source, $json.order_id, $json.phone, $json.total] }}`
 
-**7. Duplicate?** (If) → Number: `{{ $json.exact_dup }}` is greater than `0`.
+**7. Duplikat?** (If) → Number: `{{ $json.exact_dup }}` is greater than `0`.
 
-**8. Log Duplicate** (Postgres, cabang true)
-- Q3 dengan parameter `{{ [$('Normalize').first().json.order_id, $('Normalize').first().json.source, 'DUPLICATE', 'Webhook terkirim ulang'] }}`
+**8. Catat Duplikat** (Postgres, cabang true)
+- Q3 dengan parameter `{{ [$('Normalisasi').first().json.order_id, $('Normalisasi').first().json.source, 'DUPLICATE', 'Webhook terkirim ulang'] }}`
 
-**9. Reply Duplicate** (Respond to Webhook)
+**9. Balas Duplikat** (Respond to Webhook)
 - Response Code `200` (supaya pengirim seperti Shopify tidak terus mengirim ulang).
-- Body: `{{ JSON.stringify({ ok: true, duplicate: true, order_id: $('Normalize').first().json.order_id }) }}`
+- Body: `{{ JSON.stringify({ ok: true, duplicate: true, order_id: $('Normalisasi').first().json.order_id }) }}`
 
-**10. Risk Score** (Code, cabang false dari Duplicate?) → isi dengan `code-nodes/02-skor-risiko.js`.
+**10. Skor Risiko** (Code, cabang false dari Duplikat?) → isi dengan `code-nodes/02-skor-risiko.js`.
 
-**11. Needs AI?** (If) → Boolean: `{{ $json.needs_ai }}` is true.
+**11. Perlu AI?** (If) → Boolean: `{{ $json.needs_ai }}` is true.
 
 **12. Request AI** (Code, cabang true) → isi dengan `code-nodes/03-request-ai.js`.
 
@@ -223,28 +223,28 @@ Webhook Order → Normalisasi → Valid?
 
 **14. Parse AI** (Code) → isi dengan `code-nodes/04-parse-ai.js`.
 
-**15. Decide Status** (Code) → isi dengan `code-nodes/05-tentukan-status.js`. Sambungkan **dua input** ke node ini: dari `Parse AI` dan dari cabang false `Needs AI?`.
+**15. Tentukan Status** (Code) → isi dengan `code-nodes/05-tentukan-status.js`. Sambungkan **dua input** ke node ini: dari `Parse AI` dan dari cabang false `Perlu AI?`.
 
-**16. Save Order** (Postgres)
+**16. Simpan Pesanan** (Postgres)
 - Execute Query dengan **Q2**.
 - Query Parameters: `{{ $json.params }}`
 - Settings: aktifkan **Always Output Data**. Kalau dua webhook yang sama datang bersamaan, query mengembalikan 0 baris, dan workflow harus tetap sampai ke node balasan.
 
-**17. Reply Webhook** (Respond to Webhook)
+**17. Balas Webhook** (Respond to Webhook)
 - Respond With: JSON, Response Code `200`.
-- Body: `{{ JSON.stringify($('Decide Status').first().json.webhook_response) }}`
+- Body: `{{ JSON.stringify($('Tentukan Status').first().json.webhook_response) }}`
 
-**18. Needs Review?** (If), dengan dua kondisi (AND):
-- `{{ $('Decide Status').first().json.status }}` equals `PENDING_REVIEW`
-- `{{ $('Save Order').first().json.id }}` is not empty
+**18. Perlu Review?** (If), dengan dua kondisi (AND):
+- `{{ $('Tentukan Status').first().json.status }}` equals `PENDING_REVIEW`
+- `{{ $('Simpan Pesanan').first().json.id }}` is not empty
 
-**19. Notify Owner** (Telegram → Send Message)
+**19. Kirim ke Owner** (Telegram → Send Message)
 - Chat ID: chat id kamu.
-- Text: `{{ $('Decide Status').first().json.telegram_text }}`
+- Text: `{{ $('Tentukan Status').first().json.telegram_text }}`
 - Text ditambah baris link panel admin: `Putuskan di panel admin: https://order.sldev.my.id/api/admin/login`
 - Tanpa tombol. Keputusan Approve/Reject dilakukan di halaman admin website (lihat bagian 7b).
   Kalau ingin tombol di Telegram, pakai workflow Order Approval (bagian 6) dan tambahkan Inline Keyboard
-  `approve:{{ $('Save Order').first().json.id }}` / `reject:{{ $('Save Order').first().json.id }}`.
+  `approve:{{ $('Simpan Pesanan').first().json.id }}` / `reject:{{ $('Simpan Pesanan').first().json.id }}`.
 - Additional Fields: matikan **Append n8n Attribution**.
 
 Setelah selesai, klik **Publish / Active** supaya URL produksi `/webhook/order` aktif.
