@@ -1,0 +1,12 @@
+{
+  "order_id": "ORD-1006",
+  "source": "web",
+  "customer": { "name": "Budi Santoso", "email": "budi.santoso@gmail.com", "phone": "081234567890" },
+  "shipping_address": { "address": "Jl. Sudirman No. 45, RT 02/RW 03", "city": "Pekanbaru", "postal_code": "28116" },
+  "items": [
+    { "sku": "KOPI-250", "name": "Kopi Arabika 250 gr", "qty": 2, "price": 85000 },
+    { "sku": "GLS-01", "name": "Gelas Kaca", "qty": 1, "price": 45000 }
+  ],
+  "payment_method": "transfer",
+  "total": 230000
+}

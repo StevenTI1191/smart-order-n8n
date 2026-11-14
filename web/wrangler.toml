@@ -1,0 +1,41 @@
+name = "smart-order"
+main = "worker/index.js"
+compatibility_date = "2026-11-01"
+
+# Website hasil build (npm run build) disajikan dari folder dist.
+# Alamat yang bukan file (mis. /admin) diarahkan ke index.html supaya React yang menentukan halamannya.
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+# Domain website
+[[routes]]
+pattern = "order.sldev.my.id"
+custom_domain = true
+
+# Nilai publik (bukan rahasia). Rahasia diisi lewat dashboard atau `npx wrangler secret put`:
+#   N8N_WEBHOOK_SECRET  = secret yang sama dengan credential "Webhook Secret" di n8n
+#   TURNSTILE_SECRET    = secret key Turnstile (opsional, aktifkan anti-bot di demo)
+[vars]
+N8N_BASE_URL = "https://n8n.sldev.my.id/"
+TURNSTILE_SITE_KEY = ""
+ACCESS_TEAM_DOMAIN = ""   # contoh: namatim.cloudflareaccess.com
+ACCESS_AUD = ""           # Application Audience (AUD) Tag dari aplikasi Cloudflare Access
+
+# Demo publik: maksimal 5 pesanan per menit per pengunjung, dan 30 per menit untuk semua pengunjung.
+# Angkanya perkiraan (dihitung per lokasi Cloudflare).
+[[ratelimits]]
+name = "DEMO_LIMITER"
+namespace_id = "2001"
+  [ratelimits.simple]
+  limit = 5
+  period = 60
+
+[[ratelimits]]
+name = "DEMO_GLOBAL_LIMITER"
+namespace_id = "2002"
+  [ratelimits.simple]
+  limit = 30
+  period = 60

@@ -1,0 +1,9 @@
+{
+  "order_id": "ORD-1004",
+  "source": "web",
+  "customer": { "name": "Dodi", "email": "dodi@gmail.com", "phone": "12345" },
+  "shipping_address": { "address": "Jl. Melati No. 9", "city": "", "postal_code": "28111" },
+  "items": [],
+  "payment_method": "transfer",
+  "total": 0
+}

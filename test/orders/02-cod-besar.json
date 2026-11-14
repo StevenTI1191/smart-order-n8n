@@ -1,0 +1,13 @@
+{
+  "order_id": "ORD-1002",
+  "source": "web",
+  "customer": { "name": "Rina Wulandari", "email": "rina.w@yahoo.com", "phone": "+62 821 1122 3344" },
+  "shipping_address": { "address": "Perumahan Griya Indah Blok C No. 12", "city": "Dumai", "postal_code": "28812" },
+  "items": [
+    { "sku": "LPT-14", "name": "Laptop 14 inci", "qty": 1, "price": 7200000 },
+    { "sku": "MOU-01", "name": "Mouse Wireless", "qty": 1, "price": 150000 }
+  ],
+  "payment_method": "COD",
+  "total": 7350000,
+  "notes": ""
+}

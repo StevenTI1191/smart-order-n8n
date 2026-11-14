@@ -1,0 +1,23 @@
+{
+  "id": 820982911946154500,
+  "name": "#1005",
+  "email": "sari.dewi@gmail.com",
+  "phone": null,
+  "created_at": "2026-11-13T14:20:00+07:00",
+  "total_price": "320000.00",
+  "gateway": "bank_transfer",
+  "payment_gateway_names": ["bank_transfer"],
+  "note": null,
+  "customer": { "first_name": "Sari", "last_name": "Dewi", "phone": "+6285211223344" },
+  "shipping_address": {
+    "name": "Sari Dewi",
+    "address1": "Jl. Hang Tuah No. 88",
+    "address2": "Kel. Sail",
+    "city": "Pekanbaru",
+    "zip": "28131",
+    "phone": "+6285211223344"
+  },
+  "line_items": [
+    { "title": "Kaos Polos Hitam", "quantity": 4, "price": "80000.00", "sku": "KAOS-BLK" }
+  ]
+}

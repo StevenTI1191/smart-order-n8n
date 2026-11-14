@@ -1,0 +1,3 @@
+# Salin jadi .dev.vars untuk `npm run preview` (wrangler dev) di laptop. Jangan di-commit.
+N8N_WEBHOOK_SECRET=isi_secret_webhook
+DEV_ADMIN_EMAIL=kamu@email.com

@@ -1,0 +1,12 @@
+{
+  "order_id": "ORD-1003",
+  "source": "web",
+  "customer": { "name": "asdf123", "email": "x@mailinator.com", "phone": "081299990000" },
+  "shipping_address": { "address": "jl a", "city": "Jakarta", "postal_code": "" },
+  "items": [
+    { "sku": "HP-01", "name": "Smartphone 128GB", "qty": 20, "price": 100000 }
+  ],
+  "payment_method": "cod",
+  "total": 2000000,
+  "notes": "kirim cepat"
+}

@@ -1,0 +1,235 @@
+import { useEffect, useState } from 'react';
+import Icon, { Logo } from '../components/Icons.jsx';
+import Demo from '../components/Demo.jsx';
+import { Donut, Bar } from '../components/Charts.jsx';
+import { api } from '../lib/api.js';
+
+const GITHUB = 'https://github.com/StevenTI1191';
+
+const FEATURES = [
+  ['checkbox', 'Validasi otomatis', 'Nomor HP, alamat, item, dan total dicek sebelum diproses. Data rusak langsung ditolak dengan alasan yang jelas.'],
+  ['copy', 'Deteksi pesanan ganda', 'Webhook yang terkirim ulang dan pesanan serupa dalam 30 menit dikenali, jadi tidak ada yang diproses dua kali.'],
+  ['gauge', 'Skor risiko transparan', '12 aturan pasti memberi poin. Setiap skor disertai alasan, sehingga keputusan mudah dijelaskan dan diaudit.'],
+  ['spark', 'AI hanya saat perlu', 'Pesanan berisiko rendah tidak memakai AI. Kuota gratis Cloudflare Workers AI dipakai hanya untuk kasus janggal.'],
+  ['user', 'Owner tetap memegang kendali', 'AI tidak pernah menolak pesanan sendiri. Pesanan berisiko tinggi selalu menunggu Approve atau Reject dari owner.'],
+  ['doc', 'Audit log dan laporan', 'Setiap kejadian dicatat lengkap dengan siapa dan kapan, ditambah notifikasi dan ringkasan harian ke Telegram.'],
+];
+const STEPS = [
+  ['Pesanan masuk', 'Dari website, Shopify, atau aplikasi lain lewat webhook yang dilindungi secret.'],
+  ['Dicek dan dinilai', 'Validasi data, cek riwayat di PostgreSQL, lalu skor risiko dari aturan pasti.'],
+  ['AI untuk yang janggal', 'Hanya pesanan MEDIUM dan HIGH yang dikirim ke AI, tanpa nama, HP, email, dan alamat.'],
+  ['Keputusan', 'Pesanan aman disetujui otomatis. Yang berisiko menunggu owner di halaman admin.'],
+];
+// Dipakai kalau statistik server belum bisa diambil
+const SAMPLE = { total: 5, auto_approved: 3, approved_manual: 1, pending: 1, rejected: 0, risk_low: 2, risk_medium: 2, risk_high: 1 };
+
+function useStats() {
+  const [state, setState] = useState({ stats: SAMPLE, live: false });
+  useEffect(() => {
+    api.stats().then(({ ok, data }) => {
+      if (ok && data?.stats && data.stats.total > 0) setState({ stats: data.stats, live: true });
+    }).catch(() => {});
+  }, []);
+  return state;
+}
+
+export default function Landing() {
+  const { stats, live } = useStats();
+  const pct = (n) => (stats.total ? Math.round((n / stats.total) * 100) : 0);
+  const riskMax = Math.max(1, stats.risk_low + stats.risk_medium + stats.risk_high);
+
+  return (
+    <div style={{ position: 'relative', overflowX: 'clip' }}>
+      <header className="site-header">
+        <div className="wrap">
+          <Logo href="#atas" />
+          <nav className="nav" aria-label="Utama">
+            <a href="#fitur">Fitur</a><a href="#cara-kerja">Cara kerja</a><a href="#demo">Demo</a><a href="#statistik">Statistik</a>
+          </nav>
+          <div className="header-actions">
+            <a className="btn hide-sm" href="/admin">Masuk admin</a>
+            <a className="btn btn-primary" href="#demo">Coba demo</a>
+          </div>
+        </div>
+      </header>
+
+      <section id="atas" className="hero">
+        <div className="glow" aria-hidden="true" style={{ width: 640, height: 640, right: -140, top: -220, background: 'radial-gradient(circle, #BAE6FD 0%, rgba(255,255,255,0) 70%)' }} />
+        <div className="glow" aria-hidden="true" style={{ width: 520, height: 520, left: '38%', top: 220, background: 'radial-gradient(circle, #C7F0E8 0%, rgba(255,255,255,0) 70%)' }} />
+        <div className="wrap">
+          <div className="hero-copy">
+            <span className="badge-new"><b>Baru</b>AI agent untuk toko online</span>
+            <h1>Pesanan aman diproses, <span className="grad-text">tanpa cek manual satu per satu.</span></h1>
+            <p className="hero-lead">Smart Order menilai risiko setiap pesanan dengan aturan yang bisa dijelaskan, meminta pendapat AI hanya untuk yang janggal, dan menyerahkan keputusan akhir pesanan berisiko kepada pemilik toko.</p>
+            <div className="hero-cta">
+              <a className="btn btn-primary btn-lg" href="#demo">Coba demo interaktif <Icon name="arrow" stroke={2.2} /></a>
+              <a className="btn btn-lg" href={GITHUB}><Icon name="code" />Lihat kode</a>
+            </div>
+            <div className="checks">
+              <span><Icon name="check" size={16} stroke={2.4} color="#0E7490" />Data pribadi tidak dikirim ke AI</span>
+              <span><Icon name="check" size={16} stroke={2.4} color="#0E7490" />Setiap keputusan tercatat</span>
+            </div>
+          </div>
+
+          <div className="hero-shot" aria-hidden="true">
+            <div className="browser">
+              <div className="browser-bar">
+                <i style={{ background: '#F2A99F' }} /><i style={{ background: '#F4D38A' }} /><i style={{ background: '#9ED9B4' }} />
+                <span className="browser-url">order.sldev.my.id/admin</span>
+              </div>
+              <div className="browser-body">
+                <div className="mini-stats">
+                  <div className="mini-stat"><div>Otomatis</div><div>60%</div></div>
+                  <div className="mini-stat"><div>Menunggu</div><div>2</div></div>
+                  <div className="mini-stat"><div>Disetujui</div><div>Rp7,9 jt</div></div>
+                </div>
+                <div className="mini-order">
+                  <div className="row">
+                    <span className="avatar" style={{ width: 40, height: 40, fontSize: 14, background: '#DDF2F8', color: '#0E5F75' }}>AS</span>
+                    <div className="grow"><div style={{ fontWeight: 700 }}>asdf123 · ORD-1003</div><div style={{ fontSize: 13, color: 'var(--muted)' }}>20× Smartphone 128GB · COD · Rp2.000.000</div></div>
+                    <span className="pill tone-bad">HIGH 85</span>
+                  </div>
+                  <div className="chips">
+                    <span className="chip tone-bad">COD besar +25</span><span className="chip tone-bad">Alamat pendek +15</span><span className="chip tone-bad">Nama aneh +15</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <span className="fake-btn" style={{ flex: 1, border: '1px solid var(--line-2)', color: 'var(--bad)' }}>Reject</span>
+                    <span className="fake-btn" style={{ flex: 2, background: 'var(--grad)', color: '#fff' }}>Approve</span>
+                  </div>
+                </div>
+                <div className="mini-order" style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <span className="avatar" style={{ width: 40, height: 40, fontSize: 14, background: '#E7F4EC', color: '#146C43' }}>SD</span>
+                  <div className="grow"><div style={{ fontWeight: 700 }}>Sari Dewi · #1005</div><div style={{ fontSize: 13, color: 'var(--muted)' }}>4× Kaos Polos Hitam · Rp320.000</div></div>
+                  <span className="pill tone-good">Otomatis</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="tech" aria-label="Teknologi" style={{ borderBottom: '1px solid var(--line)' }}>
+        <div className="wrap">
+          <span className="tech-label">Dibangun dengan</span>
+          {['n8n', 'PostgreSQL', 'Cloudflare', 'Docker', 'React'].map((t) => <span key={t} className="tech-name">{t}</span>)}
+        </div>
+      </section>
+
+      <section className="wrap" aria-label="Angka utama" style={{ paddingTop: 64, paddingBottom: 24 }}>
+        <div className="numbers">
+          {[['12', 'aturan risiko yang bisa dijelaskan'], ['32', 'tes otomatis lulus'], ['0', 'data pribadi dikirim ke AI'], ['Rp0', 'biaya server per bulan']].map(([n, t]) => (
+            <div key={t}><div className="big grad-text">{n}</div><div className="muted">{t}</div></div>
+          ))}
+        </div>
+      </section>
+
+      <section id="fitur" className="wrap" style={{ paddingTop: 72, paddingBottom: 72, display: 'flex', flexDirection: 'column', gap: 40 }}>
+        <div className="section-head">
+          <span className="eyebrow">Fitur</span>
+          <h2 className="section-title" style={{ maxWidth: 680 }}>Semua yang dibutuhkan untuk memeriksa pesanan</h2>
+          <p className="section-sub">Dari pesanan masuk sampai keputusan akhir, setiap langkah otomatis, tercatat, dan bisa dijelaskan.</p>
+        </div>
+        <div className="features">
+          {FEATURES.map(([icon, title, text]) => (
+            <div key={title} className="card feature">
+              <span className="feature-icon"><Icon name={icon} size={22} /></span>
+              <h3>{title}</h3>
+              <p className="muted">{text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="cara-kerja" style={{ background: 'var(--soft)', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
+        <div className="wrap" style={{ paddingTop: 72, paddingBottom: 72, display: 'flex', flexDirection: 'column', gap: 40 }}>
+          <div className="section-head">
+            <span className="eyebrow">Cara kerja</span>
+            <h2 className="section-title">Empat langkah, hitungan detik</h2>
+          </div>
+          <div className="steps">
+            {STEPS.map(([title, text], i) => (
+              <div key={title} className="step">
+                <span className={`step-num ${i === STEPS.length - 1 ? 'last' : ''}`}>{i + 1}</span>
+                <h3>{title}</h3>
+                <p className="muted">{text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <Demo />
+
+      <section id="statistik" className="wrap" style={{ paddingTop: 8, paddingBottom: 72, display: 'flex', flexDirection: 'column', gap: 28 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span className="eyebrow">Statistik</span>
+            <h2 style={{ fontSize: 'clamp(26px, 5vw, 32px)', fontWeight: 800, letterSpacing: '-.03em' }}>{live ? 'Hasil 30 hari terakhir' : 'Hasil dari data uji'}</h2>
+          </div>
+          <span style={{ fontSize: 14, color: 'var(--muted)' }}>{stats.total} pesanan · tanpa data pribadi</span>
+        </div>
+        <div className="stat-cards">
+          <div className="card stat-card">
+            <h3 style={{ fontSize: 17, fontWeight: 700 }}>Status pesanan</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap' }}>
+              <Donut size={150} r={54} stroke={18} total={stats.total}
+                label={`${stats.auto_approved} otomatis, ${stats.approved_manual} disetujui owner, ${stats.pending} menunggu, ${stats.rejected} ditolak`}
+                segments={[{ value: stats.auto_approved, color: '#2E8A5E' }, { value: stats.approved_manual, color: '#2563EB' }, { value: stats.pending, color: '#D99A2B' }, { value: stats.rejected, color: '#B3261E' }]} />
+              <div className="legend">
+                <div><i style={{ background: '#2E8A5E' }} />Disetujui otomatis <strong>{stats.auto_approved} · {pct(stats.auto_approved)}%</strong></div>
+                <div><i style={{ background: '#2563EB' }} />Disetujui owner <strong>{stats.approved_manual}</strong></div>
+                <div><i style={{ background: '#D99A2B' }} />Menunggu <strong>{stats.pending}</strong></div>
+                <div><i style={{ background: '#B3261E' }} />Ditolak <strong>{stats.rejected}</strong></div>
+              </div>
+            </div>
+          </div>
+          <div className="card stat-card">
+            <h3 style={{ fontSize: 17, fontWeight: 700 }}>Level risiko</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {[['LOW', stats.risk_low, '#2E8A5E'], ['MEDIUM', stats.risk_medium, '#D99A2B'], ['HIGH', stats.risk_high, '#B3261E']].map(([l, n, c]) => (
+                <div key={l} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}><span>{l}</span><strong>{n}</strong></div>
+                  <Bar value={n} max={riskMax} color={c} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="wrap" aria-label="Ajakan" style={{ paddingBottom: 72 }}>
+        <div className="cta">
+          <div className="glow" aria-hidden="true" style={{ width: 420, height: 420, right: -120, top: -160, background: 'radial-gradient(circle, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 70%)' }} />
+          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 620 }}>
+            <h2>Lihat cara kerjanya sampai ke kode</h2>
+            <p style={{ fontSize: 17, color: '#E3F1F7' }}>Workflow n8n, query SQL, dan 32 tes otomatis tersedia lengkap di GitHub.</p>
+          </div>
+          <div style={{ position: 'relative', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <a className="btn btn-lg" href={GITHUB} style={{ border: 0, color: 'var(--teal-ink)', fontWeight: 800 }}>Buka GitHub</a>
+            <a className="btn btn-lg" href="/admin" style={{ background: 'transparent', borderColor: 'rgba(255,255,255,.55)', color: '#fff' }}>Lihat dashboard admin</a>
+          </div>
+        </div>
+      </section>
+
+      <footer className="footer">
+        <div className="wrap">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 40, justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 320 }}>
+              <Logo href="#atas" />
+              <p style={{ color: 'var(--muted)', fontSize: 14 }}>Project portfolio AI agent untuk pemeriksaan pesanan toko online.</p>
+            </div>
+            <div className="footer-cols">
+              <div><span style={{ fontWeight: 700 }}>Produk</span><a href="#fitur">Fitur</a><a href="#cara-kerja">Cara kerja</a><a href="#demo">Demo</a></div>
+              <div><span style={{ fontWeight: 700 }}>Teknologi</span><span className="f">n8n · PostgreSQL</span><span className="f">Cloudflare Workers AI</span><span className="f">Docker · React</span></div>
+              <div><span style={{ fontWeight: 700 }}>Pembuat</span><a href={GITHUB}>GitHub</a><a href="https://linkedin.com/in/steven-lim-22b6ba2b2">LinkedIn</a><a href="https://sldev.my.id">sldev.my.id</a></div>
+            </div>
+          </div>
+          <div style={{ borderTop: '1px solid var(--line)', paddingTop: 20, display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', fontSize: 13, color: 'var(--muted)' }}>
+            <span>© {new Date().getFullYear()} Steven Lim</span>
+            <span>Pesanan di website ini adalah data uji, bukan pesanan sungguhan.</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}

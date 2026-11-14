@@ -1,0 +1,643 @@
+{
+  "name": "[Order] Intake",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "order",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "f75428a8-7f02-4e08-8178-7275c5a0d45b",
+      "name": "Webhook Order",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "6908ad54-5a61-483c-a6b1-0fe3c4c76088",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "webhook-secret",
+          "name": "Webhook Secret"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Node: \"Normalisasi\"  (Code node, mode: Run Once for All Items)\n// Input : output node \"Webhook Order\" ({ headers, params, query, body })\n// Output: satu item pesanan dengan format seragam + hasil validasi.\n// Menerima dua format: payload generik (lihat test/orders) dan payload webhook Shopify (orders/create).\n\nconst body = $input.first().json.body || {};\n\n// \"150.000\" / \"150.000,50\" (format Indonesia) atau \"150000.00\" (Shopify) -> angka\nconst toNum = (v) => {\n  if (typeof v === 'number') return v;\n  const s = String(v ?? '').trim().replace(/[^\\d.,-]/g, '');\n  if (!s) return 0;\n  if (/^-?\\d{1,3}(\\.\\d{3})+(,\\d+)?$/.test(s)) return parseFloat(s.replace(/\\./g, '').replace(',', '.'));\n  return parseFloat(s.replace(/,/g, '')) || 0;\n};\n\n// 0812..., +62 812..., 812... -> 62812...\nconst normPhone = (v) => {\n  let d = String(v ?? '').replace(/\\D/g, '');\n  if (d.startsWith('0')) d = '62' + d.slice(1);\n  else if (d.startsWith('8')) d = '62' + d;\n  return d;\n};\n\nconst normPayment = (v) => {\n  const s = String(v ?? '').toLowerCase();\n  if (!s) return '';\n  if (s.includes('cod') || s.includes('cash on delivery')) return 'cod';\n  if (/(transfer|bank|va|virtual)/.test(s)) return 'transfer';\n  if (/(ovo|gopay|dana|shopeepay|ewallet|e-wallet|qris|linkaja)/.test(s)) return 'ewallet';\n  if (/(card|credit|kartu|stripe|shopify_payments)/.test(s)) return 'card';\n  return 'other';\n};\n\nconst clean = (v) => String(v ?? '').replace(/\\s+/g, ' ').trim();\n\nlet o;\nif (Array.isArray(body.line_items)) {\n  // Format webhook Shopify\n  const sa = body.shipping_address || {};\n  const cu = body.customer || {};\n  o = {\n    source: 'shopify',\n    order_id: clean(body.name || body.id),\n    customer_name: clean(sa.name || [cu.first_name, cu.last_name].filter(Boolean).join(' ')),\n    email: clean(body.email || body.contact_email || cu.email).toLowerCase(),\n    phone: normPhone(body.phone || sa.phone || cu.phone),\n    address: clean([sa.address1, sa.address2].filter(Boolean).join(', ')),\n    city: clean(sa.city),\n    postal_code: clean(sa.zip),\n    items: body.line_items.map((li) => ({\n      sku: clean(li.sku),\n      name: clean(li.title || li.name),\n      qty: Number(li.quantity) || 0,\n      price: toNum(li.price),\n    })),\n    payment_method: normPayment((body.payment_gateway_names || [])[0] || body.gateway),\n    total: toNum(body.total_price),\n    notes: clean(body.note),\n    ordered_at: body.created_at || new Date().toISOString(),\n  };\n} else {\n  // Format generik\n  const c = body.customer || {};\n  const a = body.shipping_address || {};\n  o = {\n    source: clean(body.source || 'web').toLowerCase(),\n    order_id: clean(body.order_id),\n    customer_name: clean(c.name),\n    email: clean(c.email).toLowerCase(),\n    phone: normPhone(c.phone),\n    address: clean(a.address),\n    city: clean(a.city),\n    postal_code: clean(a.postal_code),\n    items: (Array.isArray(body.items) ? body.items : []).map((it) => ({\n      sku: clean(it.sku),\n      name: clean(it.name),\n      qty: Number(it.qty) || 0,\n      price: toNum(it.price),\n    })),\n    payment_method: normPayment(body.payment_method),\n    total: toNum(body.total),\n    notes: clean(body.notes),\n    ordered_at: body.ordered_at || new Date().toISOString(),\n  };\n}\n\no.item_qty = o.items.reduce((a, i) => a + i.qty, 0);\no.items_subtotal = o.items.reduce((a, i) => a + i.qty * i.price, 0);\n\n// Validasi: hanya yang membuat pesanan tidak bisa diproses sama sekali.\n// Kejanggalan lain (alamat pendek, nama aneh, dll) dinilai di node \"Skor Risiko\".\nconst errors = [];\nif (!o.order_id) errors.push('order_id kosong');\nif (!o.customer_name) errors.push('Nama pelanggan kosong');\nif (!/^628\\d{7,11}$/.test(o.phone)) errors.push('Nomor HP tidak valid');\nif (!o.address) errors.push('Alamat kosong');\nif (!o.city) errors.push('Kota kosong');\nif (!o.items.length) errors.push('Tidak ada item');\nif (o.items.some((i) => i.qty <= 0 || i.price < 0 || !i.name)) errors.push('Ada item dengan nama, qty, atau harga tidak valid');\nif (!(o.total > 0)) errors.push('Total harus lebih dari 0');\nif (o.email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(o.email)) errors.push('Format email tidak valid');\nif (!o.payment_method) errors.push('Metode pembayaran kosong');\n\nreturn [{ json: { ...o, valid: errors.length === 0, errors } }];\n"
+      },
+      "id": "5b6fcf9e-683a-41d6-ba4b-b26fa53e33ee",
+      "name": "Normalisasi",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "633ea343-50a3-4d1d-97e8-4b0460a17a84",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ae83d1d1-2d3f-4052-80ba-d24e7db4775f",
+      "name": "Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO order_logs (order_id, source, action, note)\nVALUES ($1, $2, $3, $4);",
+        "options": {
+          "queryReplacement": "={{ [$json.order_id || '-', $json.source, 'INVALID', $json.errors.join('; ')] }}"
+        }
+      },
+      "id": "16313cfa-b8c8-4eaa-8078-e9aa38c984d5",
+      "name": "Catat Invalid",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        660,
+        520
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "orders-db",
+          "name": "Orders DB"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, errors: $('Normalisasi').first().json.errors }) }}",
+        "options": {
+          "responseCode": 422
+        }
+      },
+      "id": "e502a5df-2450-44ff-b77f-95d24d3d944c",
+      "name": "Balas Invalid",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  (SELECT count(*) FROM orders\n     WHERE source = $1 AND order_id = $2)::int                         AS exact_dup,\n  (SELECT count(*) FROM orders\n     WHERE phone = $3 AND total = $4::numeric\n       AND created_at > now() - interval '30 minutes')::int           AS near_dup,\n  (SELECT count(*) FROM orders\n     WHERE phone = $3 AND status = 'REJECTED')::int                    AS prior_rejected,\n  (SELECT count(*) FROM orders\n     WHERE phone = $3 AND status IN ('APPROVED_AUTO','APPROVED_MANUAL')\n       AND created_at < now() - interval '1 day')::int                AS prior_ok;",
+        "options": {
+          "queryReplacement": "={{ [$json.source, $json.order_id, $json.phone, $json.total] }}"
+        }
+      },
+      "id": "cbee6d8a-e5e9-4128-99fc-757027ba1441",
+      "name": "Cek Riwayat",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        660,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "orders-db",
+          "name": "Orders DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "7f3f7903-1ac5-4e84-a1b6-075941628f98",
+              "leftValue": "={{ Number($json.exact_dup) }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a67b1603-055b-445b-bb96-1839c5f498aa",
+      "name": "Duplikat?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO order_logs (order_id, source, action, note)\nVALUES ($1, $2, $3, $4);",
+        "options": {
+          "queryReplacement": "={{ [$('Normalisasi').first().json.order_id, $('Normalisasi').first().json.source, 'DUPLICATE', 'Webhook terkirim ulang'] }}"
+        }
+      },
+      "id": "e011e237-a5b4-4855-a6ce-a7d62e125a2b",
+      "name": "Catat Duplikat",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1100,
+        120
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "orders-db",
+          "name": "Orders DB"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, duplicate: true, order_id: $('Normalisasi').first().json.order_id }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "bbaa57b4-ceda-4d5b-9ae1-37bd565bbbdb",
+      "name": "Balas Duplikat",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Node: \"Skor Risiko\"  (Code node, mode: Run Once for All Items)\n// Input : output node \"Cek Riwayat\" (exact_dup, near_dup, prior_rejected, prior_ok)\n// Output: pesanan + skor risiko, level, alasan, tag klasifikasi, dan apakah perlu AI.\n// Semua aturan bersifat pasti (deterministik) supaya keputusan bisa dijelaskan dan diaudit.\n\nconst HIGH_VALUE = 5000000;   // pesanan bernilai besar\nconst COD_LIMIT = 1000000;    // COD di atas ini dianggap berisiko\nconst BULK_QTY = 10;          // qty per item yang dianggap borongan\nconst LEVEL_MEDIUM = 30;\nconst LEVEL_HIGH = 60;\nconst DISPOSABLE = ['mailinator.com', 'tempmail.com', '10minutemail.com', 'guerrillamail.com', 'yopmail.com', 'trashmail.com'];\n\nconst o = $('Normalisasi').first().json;\nconst h = $input.first().json;\nconst hist = {\n  near_dup: Number(h.near_dup) || 0,\n  prior_rejected: Number(h.prior_rejected) || 0,\n  prior_ok: Number(h.prior_ok) || 0,\n};\n\nconst reasons = [];\nconst add = (poin, teks) => reasons.push({ poin, teks });\n\nif (o.total >= HIGH_VALUE) add(30, 'Nilai pesanan besar');\nif (o.payment_method === 'cod' && o.total >= COD_LIMIT) add(25, 'COD bernilai besar');\nif (o.items.some((i) => i.qty >= BULK_QTY)) add(15, 'Jumlah per item tidak wajar');\nif (o.address.length < 15) add(15, 'Alamat terlalu pendek');\nif (!o.email) add(5, 'Tanpa email');\nelse if (DISPOSABLE.includes(o.email.split('@')[1])) add(15, 'Email sekali pakai');\n\nconst nama = o.customer_name.toLowerCase();\nif (/\\d/.test(nama) || /(.)\\1{3,}/.test(nama) || nama.replace(/\\s/g, '').length < 3 || /(asdf|qwer|test|tes123|xxx)/.test(nama)) {\n  add(15, 'Nama pelanggan mencurigakan');\n}\n\nif (o.items_subtotal > 0 && Math.abs(o.total - o.items_subtotal) / o.items_subtotal > 0.3) {\n  add(15, 'Total tidak sesuai rincian item');\n}\n\nif (hist.near_dup > 0) add(30, 'Pesanan serupa (HP dan total sama) dalam 30 menit');\nif (hist.prior_rejected > 0) add(25, 'Pelanggan pernah punya pesanan ditolak');\n\nconst jam = Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hourCycle: 'h23', timeZone: 'Asia/Jakarta' })\n  .format(new Date(o.ordered_at)));\nif (jam >= 0 && jam < 5) add(5, 'Dipesan dini hari');\n\nif (hist.prior_ok > 0) add(-10, 'Pelanggan lama dengan riwayat baik');\n\nconst score = Math.max(0, reasons.reduce((a, r) => a + r.poin, 0));\nconst level = score >= LEVEL_HIGH ? 'HIGH' : score >= LEVEL_MEDIUM ? 'MEDIUM' : 'LOW';\n\n// Klasifikasi pesanan\nconst tags = [];\nif (o.total >= HIGH_VALUE) tags.push('high_value');\nif (o.payment_method === 'cod') tags.push('cod');\nif (o.items.some((i) => i.qty >= BULK_QTY)) tags.push('bulk');\ntags.push(hist.prior_ok > 0 ? 'repeat_customer' : 'new_customer');\n\nreturn [{\n  json: {\n    ...o,\n    history: hist,\n    risk_score: score,\n    risk_level: level,\n    risk_reasons: reasons.map((r) => `${r.teks} (${r.poin > 0 ? '+' : ''}${r.poin})`),\n    tags,\n    needs_ai: level !== 'LOW', // AI hanya dipanggil untuk pesanan yang janggal, supaya hemat kuota\n  },\n}];\n"
+      },
+      "id": "c3efbae5-69ec-4c18-97f8-042c87cb03f0",
+      "name": "Skor Risiko",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c9396888-38c8-4acb-bfff-f7dacc62bd7c",
+              "leftValue": "={{ $json.needs_ai }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "13680f7b-4a30-4dea-916b-e137cbc555ad",
+      "name": "Perlu AI?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Node: \"Request AI\"  (Code node, mode: Run Once for All Items)\n// Input : output node \"Skor Risiko\" (cabang needs_ai = true)\n// Output: pesanan + ai_request (body untuk Cloudflare Workers AI)\n// Data pribadi (nama, HP, email, alamat lengkap) TIDAK dikirim ke AI. Yang dikirim hanya fitur risiko.\n\nconst o = $input.first().json;\n\nconst features = {\n  total: o.total,\n  items_subtotal: o.items_subtotal,\n  payment_method: o.payment_method,\n  item_count: o.items.length,\n  item_qty: o.item_qty,\n  items: o.items.slice(0, 10).map((i) => ({ name: i.name.slice(0, 60), qty: i.qty, price: i.price })),\n  city: o.city,\n  address_length: o.address.length,\n  has_email: Boolean(o.email),\n  customer_history: o.history,\n  rule_score: o.risk_score,\n  rule_level: o.risk_level,\n  rule_reasons: o.risk_reasons,\n  notes: o.notes.slice(0, 200),\n};\n\nconst system = [\n  'Kamu analis risiko pesanan untuk toko online di Indonesia.',\n  'Nilai apakah pesanan ini aman diproses. Data pribadi pelanggan sengaja tidak dikirim.',\n  'Balas HANYA dengan JSON valid tanpa teks lain, dengan format:',\n  '{\"verdict\":\"APPROVE|REVIEW|REJECT\",\"confidence\":0.0,\"reason\":\"maksimal 2 kalimat bahasa Indonesia\",\"flags\":[\"...\"]}',\n  'Pedoman: APPROVE jika pola pesanan wajar. REVIEW jika ada kejanggalan yang perlu dicek manusia.',\n  'REJECT hanya jika sangat jelas penipuan atau tidak masuk akal.',\n  'confidence = seberapa yakin kamu (0 sampai 1). Jangan mengarang fakta di luar data.',\n].join('\\n');\n\nconst ai_request = {\n  messages: [\n    { role: 'system', content: system },\n    { role: 'user', content: 'Data pesanan:\\n' + JSON.stringify(features) },\n  ],\n  max_tokens: 2000, // Gemma 4 \"berpikir\" dulu (reasoning), jadi butuh ruang token lebih besar\n  temperature: 0.1,\n};\n\nreturn [{ json: { ...o, ai_request } }];\n"
+      },
+      "id": "842a04bc-7b2a-4d76-9984-d1bfb9db63ac",
+      "name": "Request AI",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudflare.com/client/v4/accounts/GANTI_ACCOUNT_ID/ai/run/@cf/google/gemma-4-26b-a4b-it",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.ai_request) }}",
+        "options": {
+          "timeout": 90000
+        }
+      },
+      "id": "de4782f2-3a48-4798-9b31-e343d67885ed",
+      "name": "Cloudflare AI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cloudflare-ai",
+          "name": "Cloudflare AI"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Node: \"Parse AI\"  (Code node, mode: Run Once for All Items)\n// Input : output node \"Cloudflare AI\" (HTTP Request, Settings > On Error: Continue)\n// Output: pesanan + ai_verdict, ai_confidence, ai_reason, ai_flags\n// Kalau AI error atau jawabannya tidak bisa dibaca, pesanan diarahkan ke review manusia.\n\nconst o = { ...$('Request AI').first().json };\ndelete o.ai_request;\nconst r = $input.first().json || {};\n\nconst fallback = (alasan) => [{\n  json: { ...o, ai_verdict: 'REVIEW', ai_confidence: 0, ai_reason: alasan, ai_flags: ['ai_error'] },\n}];\n\nif (r.error || r.success === false) return fallback('AI tidak bisa dihubungi, perlu dicek manual');\n\n// Format jawaban Workers AI berbeda antar model: result.response (string/objek) atau gaya OpenAI (choices)\nlet raw = r.result?.response ?? r.result?.choices?.[0]?.message?.content ?? r.choices?.[0]?.message?.content;\n\nlet d = null;\ntry {\n  if (raw && typeof raw === 'object') d = raw;\n  else if (typeof raw === 'string') {\n    const m = raw.replace(/```json|```/g, '').match(/\\{[\\s\\S]*\\}/);\n    if (m) d = JSON.parse(m[0]);\n  }\n} catch (e) {\n  d = null;\n}\n\nconst verdict = String(d?.verdict || '').toUpperCase();\nif (!['APPROVE', 'REVIEW', 'REJECT'].includes(verdict)) return fallback('Jawaban AI tidak valid, perlu dicek manual');\n\nlet conf = Number(d.confidence);\nif (!Number.isFinite(conf)) conf = 0.5;\nconf = Math.min(1, Math.max(0, conf));\n\nreturn [{\n  json: {\n    ...o,\n    ai_verdict: verdict,\n    ai_confidence: Math.round(conf * 100) / 100,\n    ai_reason: String(d.reason || '').slice(0, 300),\n    ai_flags: Array.isArray(d.flags) ? d.flags.slice(0, 5).map(String) : [],\n  },\n}];\n"
+      },
+      "id": "ba59a07c-aa6b-4b2d-a9e3-0952935b3184",
+      "name": "Parse AI",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Node: \"Tentukan Status\"  (Code node, mode: Run Once for All Items)\n// Input : dari \"Skor Risiko\" (risiko LOW, tanpa AI) ATAU dari \"Parse AI\"\n// Output: status akhir, parameter untuk query \"Simpan Pesanan\", dan teks notifikasi Telegram.\n//\n// Aturan keputusan:\n//   LOW                                   -> APPROVED_AUTO (oleh rules)\n//   MEDIUM + AI APPROVE + confidence>=0.7 -> APPROVED_AUTO (oleh ai)\n//   selain itu (termasuk semua HIGH)      -> PENDING_REVIEW (owner memutuskan)\n// Kemungkinan pesanan ganda (near_dup) selalu ke owner, apa pun kata AI.\n// AI tidak pernah menolak pesanan sendiri. Rekomendasi REJECT tetap diputuskan manusia.\n\nconst MIN_AI_CONFIDENCE = 0.7;\nconst o = $input.first().json;\n\nlet status = 'PENDING_REVIEW';\nlet decided_by = 'system';\nif (o.risk_level === 'LOW') {\n  status = 'APPROVED_AUTO';\n  decided_by = 'rules';\n} else if (o.risk_level === 'MEDIUM' && !(Number(o.history?.near_dup) > 0) && o.ai_verdict === 'APPROVE' && Number(o.ai_confidence) >= MIN_AI_CONFIDENCE) {\n  status = 'APPROVED_AUTO';\n  decided_by = 'ai';\n}\n\nconst rp = (n) => 'Rp' + Math.round(Number(n) || 0).toLocaleString('id-ID');\n\nconst params = [\n  o.order_id,                                   // $1\n  o.source,                                     // $2\n  o.customer_name,                              // $3\n  o.email || '',                                // $4\n  o.phone,                                      // $5\n  o.address,                                    // $6\n  o.city,                                       // $7\n  o.postal_code || '',                          // $8\n  JSON.stringify(o.items),                      // $9\n  o.item_qty,                                   // $10\n  o.payment_method,                             // $11\n  o.total,                                      // $12\n  o.risk_score,                                 // $13\n  o.risk_level,                                 // $14\n  JSON.stringify(o.risk_reasons || []),         // $15\n  JSON.stringify(o.tags || []),                 // $16\n  o.ai_verdict || '',                           // $17\n  o.ai_confidence == null ? '' : String(o.ai_confidence), // $18\n  o.ai_reason || '',                            // $19\n  status,                                       // $20\n  decided_by,                                   // $21\n];\n\nconst telegram_text = [\n  'Pesanan perlu review',\n  `${o.order_id} (${o.source})`,\n  `Pelanggan: ${o.customer_name}, ${o.city}`,\n  `Total: ${rp(o.total)} (${o.payment_method})`,\n  `Item: ${o.items.map((i) => `${i.qty}x ${i.name}`).join(', ').slice(0, 200)}`,\n  '',\n  `Skor risiko: ${o.risk_score} (${o.risk_level})`,\n  ...(o.risk_reasons || []).map((r) => `- ${r}`),\n  '',\n  o.ai_verdict ? `Rekomendasi AI: ${o.ai_verdict} (${o.ai_confidence})` : 'Rekomendasi AI: -',\n  o.ai_reason || '',\n].join('\\n').trim();\n\nreturn [{\n  json: {\n    ...o,\n    status,\n    decided_by,\n    params,\n    telegram_text,\n    // Balasan ke pengirim (toko / website demo): hasil analisis tanpa data pribadi\n    webhook_response: {\n      ok: true,\n      order_id: o.order_id,\n      status,\n      decided_by,\n      risk_score: o.risk_score,\n      risk_level: o.risk_level,\n      risk_reasons: o.risk_reasons || [],\n      tags: o.tags || [],\n      ai_verdict: o.ai_verdict || null,\n      ai_confidence: o.ai_confidence ?? null,\n      ai_reason: o.ai_reason || null,\n    },\n  },\n}];\n"
+      },
+      "id": "bcc38cab-dab8-4887-9265-3b8f50451f21",
+      "name": "Tentukan Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH ins AS (\n  INSERT INTO orders (\n    order_id, source, customer_name, email, phone, address, city, postal_code,\n    items, item_qty, payment_method, total,\n    risk_score, risk_level, risk_reasons, tags,\n    ai_verdict, ai_confidence, ai_reason, status, decided_by\n  ) VALUES (\n    $1, $2, $3, NULLIF($4, ''), $5, $6, $7, NULLIF($8, ''),\n    $9::jsonb, $10::int, $11, $12::numeric,\n    $13::int, $14, $15::jsonb, $16::jsonb,\n    NULLIF($17, ''), NULLIF($18, '')::numeric, NULLIF($19, ''), $20, $21\n  )\n  ON CONFLICT (source, order_id) DO NOTHING\n  RETURNING id, order_id, source, status\n), lg AS (\n  INSERT INTO order_logs (order_id, source, action, actor, note)\n  SELECT order_id, source, status, $21, $19 FROM ins\n)\nSELECT * FROM ins;",
+        "options": {
+          "queryReplacement": "={{ $json.params }}"
+        }
+      },
+      "id": "ec677c41-f672-4dc4-aca4-857ca88feb77",
+      "name": "Simpan Pesanan",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2420,
+        420
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "orders-db",
+          "name": "Orders DB"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($('Tentukan Status').first().json.webhook_response) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "e3ee8b06-2552-4be8-a6d0-47e9d544c5f6",
+      "name": "Balas Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2640,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "ef6590b0-9dbc-4940-a651-57c03241436f",
+              "leftValue": "={{ $('Tentukan Status').first().json.status }}",
+              "rightValue": "PENDING_REVIEW",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "103b68cb-3cda-4d4f-93bd-0d96e1d2fbe8",
+              "leftValue": "={{ String($('Simpan Pesanan').first().json.id ?? '') }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "cc22674a-9ff5-407e-85f8-65bb2df10d10",
+      "name": "Perlu Review?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2860,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "GANTI_CHAT_ID",
+        "text": "={{ $('Tentukan Status').first().json.telegram_text }}\n\nPutuskan di panel admin: https://order.sldev.my.id/api/admin/login",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "0c0add0f-f4ef-423e-ba88-f11b01c691e2",
+      "name": "Kirim ke Owner",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3080,
+        420
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "order-bot",
+          "name": "Order Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Order": {
+      "main": [
+        [
+          {
+            "node": "Normalisasi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalisasi": {
+      "main": [
+        [
+          {
+            "node": "Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid?": {
+      "main": [
+        [
+          {
+            "node": "Cek Riwayat",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Catat Invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Catat Invalid": {
+      "main": [
+        [
+          {
+            "node": "Balas Invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cek Riwayat": {
+      "main": [
+        [
+          {
+            "node": "Duplikat?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Duplikat?": {
+      "main": [
+        [
+          {
+            "node": "Catat Duplikat",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skor Risiko",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Catat Duplikat": {
+      "main": [
+        [
+          {
+            "node": "Balas Duplikat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skor Risiko": {
+      "main": [
+        [
+          {
+            "node": "Perlu AI?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Perlu AI?": {
+      "main": [
+        [
+          {
+            "node": "Request AI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Tentukan Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Request AI": {
+      "main": [
+        [
+          {
+            "node": "Cloudflare AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cloudflare AI": {
+      "main": [
+        [
+          {
+            "node": "Parse AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI": {
+      "main": [
+        [
+          {
+            "node": "Tentukan Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tentukan Status": {
+      "main": [
+        [
+          {
+            "node": "Simpan Pesanan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simpan Pesanan": {
+      "main": [
+        [
+          {
+            "node": "Balas Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Balas Webhook": {
+      "main": [
+        [
+          {
+            "node": "Perlu Review?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Perlu Review?": {
+      "main": [
+        [
+          {
+            "node": "Kirim ke Owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

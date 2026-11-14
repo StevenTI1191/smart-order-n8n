@@ -1,0 +1,435 @@
+{
+  "name": "[Order] API",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "api/orders",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "fab8b8cd-2c30-4108-9ec3-db5d5395c6ba",
+      "name": "Daftar",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        100
+      ],
+      "webhookId": "0c8ee003-cf7b-4696-be08-a42a1d2830af",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "webhook-secret",
+          "name": "Webhook Secret"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  (SELECT coalesce(json_agg(o ORDER BY o.created_at DESC), '[]'::json) FROM (\n     SELECT id, order_id, source, customer_name, phone, city, items, item_qty,\n            payment_method, total, risk_score, risk_level, risk_reasons, tags,\n            ai_verdict, ai_confidence, ai_reason, status, decided_by, created_at, updated_at\n       FROM orders\n      WHERE $1 = 'ALL' OR status = $1\n      ORDER BY created_at DESC\n      LIMIT 200) o)                                                     AS orders,\n  (SELECT coalesce(json_agg(l ORDER BY l.created_at DESC), '[]'::json) FROM (\n     SELECT order_id, action, actor, note, created_at\n       FROM order_logs\n      ORDER BY created_at DESC\n      LIMIT 30) l)                                                      AS activity;",
+        "options": {
+          "queryReplacement": "={{ [String($json.query?.status || 'ALL').toUpperCase().replace(/[^A-Z_]/g, '') || 'ALL'] }}"
+        }
+      },
+      "id": "eb542324-950f-46ae-8955-a6d25ed3a82d",
+      "name": "Daftar Order",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        220,
+        100
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "orders-db",
+          "name": "Orders DB"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, orders: $json.orders || [], activity: $json.activity || [] }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "8f929849-a47c-44a0-b5e9-f9654384dda2",
+      "name": "Balas Daftar",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api/decide",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "aa36bcb7-2ebe-4327-b34a-8aba3db4abd5",
+      "name": "Keputusan",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        360
+      ],
+      "webhookId": "3fa20bb0-7e7b-46f5-893d-0e1f75459a21",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "webhook-secret",
+          "name": "Webhook Secret"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Node: \"Cek Keputusan\"  (Code node, workflow \"[Order] API\", mode: Run Once for All Items)\n// Input : Webhook \"Keputusan\" (POST /webhook/api/decide)\n// Body  : { \"id\": 12, \"decision\": \"APPROVE\" | \"REJECT\", \"by\": \"steven@email.com\" }\n// Output: { valid, error, params: [status_baru, oleh, id] } untuk query Q4.\n// Siapa yang menekan tombol diisi oleh server website (dari login Cloudflare Access),\n// bukan dari browser, jadi tidak bisa dipalsukan pengunjung.\n\nconst b = $input.first().json.body || {};\nconst id = String(b.id ?? '').trim();\nconst decision = String(b.decision || '').toUpperCase();\nconst status_baru = decision === 'APPROVE' ? 'APPROVED_MANUAL' : decision === 'REJECT' ? 'REJECTED' : null;\nconst oleh = String(b.by || 'admin').replace(/[^\\w@.+-]/g, '').slice(0, 80) || 'admin';\n\nlet error = null;\nif (!/^\\d{1,18}$/.test(id)) error = 'id tidak valid';\nelse if (!status_baru) error = 'decision harus APPROVE atau REJECT';\n\nreturn [{\n  json: {\n    valid: !error,\n    error,\n    id,\n    status_baru,\n    oleh: 'web:' + oleh,\n    params: [status_baru, 'web:' + oleh, id],\n  },\n}];\n"
+      },
+      "id": "979bffd0-135d-4d13-8ed9-cfe517af38c0",
+      "name": "Cek Keputusan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "72c6fc75-7f9b-4be7-a650-ed5b1a586659",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "21b98d26-1f04-4120-a09f-1ae94cd4c66a",
+      "name": "Keputusan Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, error: $('Cek Keputusan').first().json.error }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "26c06343-0239-419c-ad42-ef088bcd5f21",
+      "name": "Balas Tidak Valid",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH upd AS (\n  UPDATE orders\n     SET status = $1, decided_by = $2, updated_at = now()\n   WHERE id = $3::bigint AND status = 'PENDING_REVIEW'\n  RETURNING id, order_id, source, status, customer_name, total\n), lg AS (\n  INSERT INTO order_logs (order_id, source, action, actor)\n  SELECT order_id, source, status, $2 FROM upd\n)\nSELECT * FROM upd;",
+        "options": {
+          "queryReplacement": "={{ $('Cek Keputusan').first().json.params }}"
+        }
+      },
+      "id": "d8e563cc-7d9d-435b-aba7-3c380a408687",
+      "name": "Update Keputusan",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        660,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "orders-db",
+          "name": "Orders DB"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "5667be21-073e-4d99-b4ed-e268960c61f1",
+              "leftValue": "={{ String($json.id ?? '') }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "cba149cd-8ef0-4261-9712-f304959a79e4",
+      "name": "Berhasil Diubah?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, order: $json }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "d5b208ba-6413-4737-8ce8-85743ff644dd",
+      "name": "Balas Berhasil",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, error: 'Order tidak ditemukan atau sudah diputuskan' }) }}",
+        "options": {
+          "responseCode": 409
+        }
+      },
+      "id": "c73715a5-e054-40ea-b93c-c801b6be0b0d",
+      "name": "Balas Konflik",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "api/stats",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "3fecee0b-047b-4a31-b078-54ac1ed55d5c",
+      "name": "Statistik Publik",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        700
+      ],
+      "webhookId": "77c54b92-2a71-4fc5-a637-4296d36ba928",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "webhook-secret",
+          "name": "Webhook Secret"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  count(*)::int                                                        AS total,\n  count(*) FILTER (WHERE status = 'APPROVED_AUTO')::int                AS auto_approved,\n  count(*) FILTER (WHERE status = 'PENDING_REVIEW')::int               AS pending,\n  count(*) FILTER (WHERE status = 'APPROVED_MANUAL')::int              AS approved_manual,\n  count(*) FILTER (WHERE status = 'REJECTED')::int                     AS rejected,\n  count(*) FILTER (WHERE risk_level = 'LOW')::int                      AS risk_low,\n  count(*) FILTER (WHERE risk_level = 'MEDIUM')::int                   AS risk_medium,\n  count(*) FILTER (WHERE risk_level = 'HIGH')::int                     AS risk_high,\n  count(*) FILTER (WHERE ai_verdict IS NOT NULL)::int                  AS ai_checked,\n  coalesce(round(avg(risk_score)), 0)::int                             AS avg_risk,\n  (SELECT count(*) FROM order_logs\n    WHERE action IN ('DUPLICATE', 'INVALID')\n      AND created_at >= now() - interval '30 days')::int               AS blocked\n  FROM orders\n WHERE created_at >= now() - interval '30 days';",
+        "options": {}
+      },
+      "id": "f3bd5d44-3a43-49e1-a9c9-8b01480aa04c",
+      "name": "Statistik",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        220,
+        700
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "orders-db",
+          "name": "Orders DB"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, stats: $json }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "b41aff2b-688b-4afe-8798-577872e4f01d",
+      "name": "Balas Statistik",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        700
+      ]
+    }
+  ],
+  "connections": {
+    "Daftar": {
+      "main": [
+        [
+          {
+            "node": "Daftar Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daftar Order": {
+      "main": [
+        [
+          {
+            "node": "Balas Daftar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keputusan": {
+      "main": [
+        [
+          {
+            "node": "Cek Keputusan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cek Keputusan": {
+      "main": [
+        [
+          {
+            "node": "Keputusan Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keputusan Valid?": {
+      "main": [
+        [
+          {
+            "node": "Update Keputusan",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Balas Tidak Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Keputusan": {
+      "main": [
+        [
+          {
+            "node": "Berhasil Diubah?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Berhasil Diubah?": {
+      "main": [
+        [
+          {
+            "node": "Balas Berhasil",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Balas Konflik",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Statistik Publik": {
+      "main": [
+        [
+          {
+            "node": "Statistik",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Statistik": {
+      "main": [
+        [
+          {
+            "node": "Balas Statistik",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
