@@ -166,7 +166,7 @@ Penjelasan berikut berguna untuk memahami setiap node, atau untuk menyusun workf
 Buat workflow baru bernama **Order Intake**. Nama node harus sama persis seperti di bawah, karena dipakai di dalam kode.
 
 ```
-Webhook Order → Normalize → Valid?
+Webhook Order → Normalisasi → Valid?
    ├─ false → Log Invalid → Reply Invalid
    └─ true  → Check History → Duplicate?
                  ├─ true  → Log Duplicate → Reply Duplicate
@@ -182,7 +182,7 @@ Webhook Order → Normalize → Valid?
 - Authentication: Header Auth → credential "Webhook Secret".
 - Respond: **Using 'Respond to Webhook' Node**.
 
-**2. Normalize** (Code) → isi dengan `code-nodes/01-normalisasi.js`.
+**2. Normalisasi** (Code) → isi dengan `code-nodes/01-normalisasi.js`.
 
 **3. Valid?** (If) → kondisi Boolean: `{{ $json.valid }}` is true.
 
@@ -341,7 +341,7 @@ docker compose exec postgres psql -U orders_app -d orders \
 
 ## 9. Menghubungkan ke toko sungguhan (Shopify)
 
-Node `Normalize` sudah bisa membaca payload webhook Shopify `orders/create`.
+Node `Normalisasi` sudah bisa membaca payload webhook Shopify `orders/create`.
 
 1. Buat **development store** gratis lewat akun Shopify Partner.
 2. Settings → Notifications → Webhooks → buat webhook `Order creation` dengan format JSON dan URL `https://n8n.sldev.my.id/webhook/order`.
