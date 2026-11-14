@@ -140,7 +140,7 @@ def workflow(name, nodes, edges):
 
 
 # ---------------------------------------------------------------- Workflow 1
-N = "$('Normalisasi').first().json"
+N = "$('Normalize').first().json"
 intake_nodes = [
     node("Webhook Order", "n8n-nodes-base.webhook", 2, [0, 300], {
         "httpMethod": "POST",
@@ -149,26 +149,26 @@ intake_nodes = [
         "responseMode": "responseNode",
         "options": {},
     }, webhookId=uid(), credentials=CRED["webhook"]),
-    code_node("Normalisasi", "01-normalisasi.js", [220, 300]),
+    code_node("Normalize", "01-normalisasi.js", [220, 300]),
     if_node("Valid?", [440, 300], [("={{ $json.valid }}", "boolean", "true", "")]),
-    pg_node("Catat Invalid", Q["Q3"],
+    pg_node("Log Invalid", Q["Q3"],
             "={{ [$json.order_id || '-', $json.source, 'INVALID', $json.errors.join('; ')] }}",
-            [660, 520], always=True),
-    respond_node("Balas Invalid",
-                 f"={{{{ JSON.stringify({{ ok: false, errors: {N}.errors }}) }}}}", 422, [880, 520]),
-    pg_node("Cek Riwayat", Q["Q1"],
-            "={{ [$json.source, $json.order_id, $json.phone, $json.total] }}", [660, 300]),
-    if_node("Duplikat?", [880, 300], [("={{ Number($json.exact_dup) }}", "number", "gt", 0)]),
-    pg_node("Catat Duplikat", Q["Q3"],
+            [660, 500], always=True),
+    respond_node("Reply Invalid",
+                 f"={{{{ JSON.stringify({{ ok: false, errors: {N}.errors }}) }}}}", 422, [880, 500]),
+    pg_node("Check History", Q["Q1"],
+            "={{ [$json.source, $json.order_id, $json.phone, $json.total] }}", [1120, 300]),
+    if_node("Duplicate?", [1340, 300], [("={{ Number($json.exact_dup) }}", "number", "gt", 0)]),
+    pg_node("Log Duplicate", Q["Q3"],
             f"={{{{ [{N}.order_id, {N}.source, 'DUPLICATE', 'Webhook terkirim ulang'] }}}}",
-            [1100, 120], always=True),
-    respond_node("Balas Duplikat",
+            [1560, 120], always=True),
+    respond_node("Reply Duplicate",
                  f"={{{{ JSON.stringify({{ ok: true, duplicate: true, order_id: {N}.order_id }}) }}}}",
-                 200, [1320, 120]),
-    code_node("Skor Risiko", "02-skor-risiko.js", [1100, 400]),
-    if_node("Perlu AI?", [1320, 400], [("={{ $json.needs_ai }}", "boolean", "true", "")]),
-    code_node("Request AI", "03-request-ai.js", [1540, 300]),
-    node("Cloudflare AI", "n8n-nodes-base.httpRequest", 4.2, [1760, 300], {
+                 200, [1780, 120]),
+    code_node("Risk Score", "02-skor-risiko.js", [2040, 400]),
+    if_node("Needs AI?", [2260, 400], [("={{ $json.needs_ai }}", "boolean", "true", "")]),
+    code_node("Request AI", "03-request-ai.js", [2480, 260]),
+    node("Cloudflare AI", "n8n-nodes-base.httpRequest", 4.2, [2700, 260], {
         "method": "POST",
         "url": f"https://api.cloudflare.com/client/v4/accounts/{ACCOUNT_ID}/ai/run/{CF_MODEL}",
         "authentication": "genericCredentialType",
@@ -179,41 +179,59 @@ intake_nodes = [
         "options": {"timeout": 90000},
     }, credentials=CRED["cfai"], retryOnFail=True, maxTries=3, waitBetweenTries=3000,
         onError="continueRegularOutput"),
-    code_node("Parse AI", "04-parse-ai.js", [1980, 300]),
-    code_node("Tentukan Status", "05-tentukan-status.js", [2200, 420]),
-    pg_node("Simpan Pesanan", Q["Q2"], "={{ $json.params }}", [2420, 420], always=True),
-    respond_node("Balas Webhook",
-                 "={{ JSON.stringify($('Tentukan Status').first().json.webhook_response) }}",
-                 200, [2640, 420]),
-    if_node("Perlu Review?", [2860, 420], [
-        ("={{ $('Tentukan Status').first().json.status }}", "string", "equals", "PENDING_REVIEW"),
-        ("={{ String($('Simpan Pesanan').first().json.id ?? '') }}", "string", "notEmpty", ""),
+    code_node("Parse AI", "04-parse-ai.js", [2920, 260]),
+    code_node("Decide Status", "05-tentukan-status.js", [3180, 400]),
+    pg_node("Save Order", Q["Q2"], "={{ $json.params }}", [3400, 400], always=True),
+    respond_node("Reply Webhook",
+                 "={{ JSON.stringify($('Decide Status').first().json.webhook_response) }}",
+                 200, [3620, 400]),
+    if_node("Needs Review?", [3840, 400], [
+        ("={{ $('Decide Status').first().json.status }}", "string", "equals", "PENDING_REVIEW"),
+        ("={{ String($('Save Order').first().json.id ?? '') }}", "string", "notEmpty", ""),
     ]),
     # Notifikasi saja: keputusan Approve/Reject dilakukan di halaman admin website
-    tg_send("Kirim ke Owner", CHAT_ID,
-            "={{ $('Tentukan Status').first().json.telegram_text }}\n\nPutuskan di panel admin: "
-            + ADMIN_URL, [3080, 420]),
+    tg_send("Notify Owner", CHAT_ID,
+            "={{ $('Decide Status').first().json.telegram_text }}\n\nPutuskan di panel admin: "
+            + ADMIN_URL, [4060, 400]),
 ]
-intake = workflow("[Order] Intake", intake_nodes, [
-    ("Webhook Order", "Normalisasi"),
-    ("Normalisasi", "Valid?"),
-    ("Valid?", "Cek Riwayat", 0),
-    ("Valid?", "Catat Invalid", 1),
-    ("Catat Invalid", "Balas Invalid"),
-    ("Cek Riwayat", "Duplikat?"),
-    ("Duplikat?", "Catat Duplikat", 0),
-    ("Duplikat?", "Skor Risiko", 1),
-    ("Catat Duplikat", "Balas Duplikat"),
-    ("Skor Risiko", "Perlu AI?"),
-    ("Perlu AI?", "Request AI", 0),
-    ("Perlu AI?", "Tentukan Status", 1),
+
+# Sticky note pengelompok (tampilan di editor n8n)
+def sticky(i, title, text, x, w, color):
+    return node(f"Note {i}", "n8n-nodes-base.stickyNote", 1, [x, 20], {
+        "content": f"## {i} · {title}\n{text}",
+        "height": 640,
+        "width": w,
+        "color": color,
+    })
+
+
+intake_notes = [
+    sticky(1, "Intake & validation", "Webhook protected by a secret. Broken orders are rejected with clear reasons.", -60, 1080, 5),
+    sticky(2, "Duplicate check", "Resent webhooks are logged once and ignored.", 1060, 900, 4),
+    sticky(3, "Risk score + AI", "12 explainable rules. Only MEDIUM/HIGH orders go to Cloudflare Workers AI, without personal data.", 1980, 1080, 6),
+    sticky(4, "Decision & notify", "LOW auto-approved, risky orders wait for the owner. Everything is saved and logged.", 3120, 1080, 2),
+]
+
+intake = workflow("[Order] Intake", intake_notes + intake_nodes, [
+    ("Webhook Order", "Normalize"),
+    ("Normalize", "Valid?"),
+    ("Valid?", "Check History", 0),
+    ("Valid?", "Log Invalid", 1),
+    ("Log Invalid", "Reply Invalid"),
+    ("Check History", "Duplicate?"),
+    ("Duplicate?", "Log Duplicate", 0),
+    ("Duplicate?", "Risk Score", 1),
+    ("Log Duplicate", "Reply Duplicate"),
+    ("Risk Score", "Needs AI?"),
+    ("Needs AI?", "Request AI", 0),
+    ("Needs AI?", "Decide Status", 1),
     ("Request AI", "Cloudflare AI"),
     ("Cloudflare AI", "Parse AI"),
-    ("Parse AI", "Tentukan Status"),
-    ("Tentukan Status", "Simpan Pesanan"),
-    ("Simpan Pesanan", "Balas Webhook"),
-    ("Balas Webhook", "Perlu Review?"),
-    ("Perlu Review?", "Kirim ke Owner", 0),
+    ("Parse AI", "Decide Status"),
+    ("Decide Status", "Save Order"),
+    ("Save Order", "Reply Webhook"),
+    ("Reply Webhook", "Needs Review?"),
+    ("Needs Review?", "Notify Owner", 0),
 ])
 
 # ---------------------------------------------------------------- Workflow 2

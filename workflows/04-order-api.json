@@ -9,7 +9,7 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "fab8b8cd-2c30-4108-9ec3-db5d5395c6ba",
+      "id": "40508fcb-de92-421c-8915-4b7bd3e4dcb7",
       "name": "Daftar",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
@@ -17,7 +17,7 @@
         0,
         100
       ],
-      "webhookId": "0c8ee003-cf7b-4696-be08-a42a1d2830af",
+      "webhookId": "c11c5c37-1d1f-4f65-bb90-ddcd3e795ff1",
       "credentials": {
         "httpHeaderAuth": {
           "id": "webhook-secret",
@@ -33,7 +33,7 @@
           "queryReplacement": "={{ [String($json.query?.status || 'ALL').toUpperCase().replace(/[^A-Z_]/g, '') || 'ALL'] }}"
         }
       },
-      "id": "eb542324-950f-46ae-8955-a6d25ed3a82d",
+      "id": "53d25235-7dc7-41ba-a5e0-1710ee4c5d53",
       "name": "Daftar Order",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
@@ -57,7 +57,7 @@
           "responseCode": 200
         }
       },
-      "id": "8f929849-a47c-44a0-b5e9-f9654384dda2",
+      "id": "3f10f949-a3f6-45d3-bb7e-296ad7840cd9",
       "name": "Balas Daftar",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
@@ -74,7 +74,7 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "aa36bcb7-2ebe-4327-b34a-8aba3db4abd5",
+      "id": "20c8f81f-4f20-4ac4-a3d0-109e58dc902b",
       "name": "Keputusan",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
@@ -82,7 +82,7 @@
         0,
         360
       ],
-      "webhookId": "3fa20bb0-7e7b-46f5-893d-0e1f75459a21",
+      "webhookId": "6891e3af-a978-4494-b499-42bcca29328b",
       "credentials": {
         "httpHeaderAuth": {
           "id": "webhook-secret",
@@ -94,7 +94,7 @@
       "parameters": {
         "jsCode": "// Node: \"Cek Keputusan\"  (Code node, workflow \"[Order] API\", mode: Run Once for All Items)\n// Input : Webhook \"Keputusan\" (POST /webhook/api/decide)\n// Body  : { \"id\": 12, \"decision\": \"APPROVE\" | \"REJECT\", \"by\": \"steven@email.com\" }\n// Output: { valid, error, params: [status_baru, oleh, id] } untuk query Q4.\n// Siapa yang menekan tombol diisi oleh server website (dari login Cloudflare Access),\n// bukan dari browser, jadi tidak bisa dipalsukan pengunjung.\n\nconst b = $input.first().json.body || {};\nconst id = String(b.id ?? '').trim();\nconst decision = String(b.decision || '').toUpperCase();\nconst status_baru = decision === 'APPROVE' ? 'APPROVED_MANUAL' : decision === 'REJECT' ? 'REJECTED' : null;\nconst oleh = String(b.by || 'admin').replace(/[^\\w@.+-]/g, '').slice(0, 80) || 'admin';\n\nlet error = null;\nif (!/^\\d{1,18}$/.test(id)) error = 'id tidak valid';\nelse if (!status_baru) error = 'decision harus APPROVE atau REJECT';\n\nreturn [{\n  json: {\n    valid: !error,\n    error,\n    id,\n    status_baru,\n    oleh: 'web:' + oleh,\n    params: [status_baru, 'web:' + oleh, id],\n  },\n}];\n"
       },
-      "id": "979bffd0-135d-4d13-8ed9-cfe517af38c0",
+      "id": "cf71cab5-65dc-4ac6-8efb-134756c3a45c",
       "name": "Cek Keputusan",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -113,7 +113,7 @@
           },
           "conditions": [
             {
-              "id": "72c6fc75-7f9b-4be7-a650-ed5b1a586659",
+              "id": "ef4d13ad-a926-40cc-9ea7-2611cc568c9d",
               "leftValue": "={{ $json.valid }}",
               "rightValue": "",
               "operator": {
@@ -127,7 +127,7 @@
         },
         "options": {}
       },
-      "id": "21b98d26-1f04-4120-a09f-1ae94cd4c66a",
+      "id": "5c05058a-6c67-4ddb-896d-8c05be65bf9a",
       "name": "Keputusan Valid?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -144,7 +144,7 @@
           "responseCode": 400
         }
       },
-      "id": "26c06343-0239-419c-ad42-ef088bcd5f21",
+      "id": "76d681c8-9175-477c-b3a8-cbfd7781b2dd",
       "name": "Balas Tidak Valid",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
@@ -161,7 +161,7 @@
           "queryReplacement": "={{ $('Cek Keputusan').first().json.params }}"
         }
       },
-      "id": "d8e563cc-7d9d-435b-aba7-3c380a408687",
+      "id": "179f5e19-d561-40a1-a9c7-a6bb75ff9a4c",
       "name": "Update Keputusan",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
@@ -187,7 +187,7 @@
           },
           "conditions": [
             {
-              "id": "5667be21-073e-4d99-b4ed-e268960c61f1",
+              "id": "424f52e4-c6a1-406b-96e4-fc9a844f2130",
               "leftValue": "={{ String($json.id ?? '') }}",
               "rightValue": "",
               "operator": {
@@ -201,7 +201,7 @@
         },
         "options": {}
       },
-      "id": "cba149cd-8ef0-4261-9712-f304959a79e4",
+      "id": "26e50042-edfd-4570-bd4d-c1201e3275e7",
       "name": "Berhasil Diubah?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -218,7 +218,7 @@
           "responseCode": 200
         }
       },
-      "id": "d5b208ba-6413-4737-8ce8-85743ff644dd",
+      "id": "aa8de217-354d-42ea-9932-1cf536222bdf",
       "name": "Balas Berhasil",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
@@ -235,7 +235,7 @@
           "responseCode": 409
         }
       },
-      "id": "c73715a5-e054-40ea-b93c-c801b6be0b0d",
+      "id": "64de0229-d6d7-475a-b355-2c21dc4190bd",
       "name": "Balas Konflik",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
@@ -252,7 +252,7 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "3fecee0b-047b-4a31-b078-54ac1ed55d5c",
+      "id": "538b5e1e-800e-4636-a468-f384358b5201",
       "name": "Statistik Publik",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
@@ -260,7 +260,7 @@
         0,
         700
       ],
-      "webhookId": "77c54b92-2a71-4fc5-a637-4296d36ba928",
+      "webhookId": "48963606-f162-416a-9452-994e01d0cc77",
       "credentials": {
         "httpHeaderAuth": {
           "id": "webhook-secret",
@@ -274,7 +274,7 @@
         "query": "SELECT\n  count(*)::int                                                        AS total,\n  count(*) FILTER (WHERE status = 'APPROVED_AUTO')::int                AS auto_approved,\n  count(*) FILTER (WHERE status = 'PENDING_REVIEW')::int               AS pending,\n  count(*) FILTER (WHERE status = 'APPROVED_MANUAL')::int              AS approved_manual,\n  count(*) FILTER (WHERE status = 'REJECTED')::int                     AS rejected,\n  count(*) FILTER (WHERE risk_level = 'LOW')::int                      AS risk_low,\n  count(*) FILTER (WHERE risk_level = 'MEDIUM')::int                   AS risk_medium,\n  count(*) FILTER (WHERE risk_level = 'HIGH')::int                     AS risk_high,\n  count(*) FILTER (WHERE ai_verdict IS NOT NULL)::int                  AS ai_checked,\n  coalesce(round(avg(risk_score)), 0)::int                             AS avg_risk,\n  (SELECT count(*) FROM order_logs\n    WHERE action IN ('DUPLICATE', 'INVALID')\n      AND created_at >= now() - interval '30 days')::int               AS blocked\n  FROM orders\n WHERE created_at >= now() - interval '30 days';",
         "options": {}
       },
-      "id": "f3bd5d44-3a43-49e1-a9c9-8b01480aa04c",
+      "id": "749ca786-0ea0-4734-8450-908c1b24831d",
       "name": "Statistik",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
@@ -298,7 +298,7 @@
           "responseCode": 200
         }
       },
-      "id": "b41aff2b-688b-4afe-8798-577872e4f01d",
+      "id": "631ca490-3a22-4732-93fe-cdb0f4ac2f98",
       "name": "Balas Statistik",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,

@@ -8,7 +8,7 @@
         ],
         "additionalFields": {}
       },
-      "id": "6c49359f-fa9e-45b9-8dc1-36951e11ec81",
+      "id": "5ea1d0cd-277c-4425-b960-8d407b81a2ba",
       "name": "Telegram Trigger",
       "type": "n8n-nodes-base.telegramTrigger",
       "typeVersion": 1.1,
@@ -16,7 +16,7 @@
         0,
         300
       ],
-      "webhookId": "076c1fc6-0de9-44e3-95d4-557c04b4fbf7",
+      "webhookId": "bbd10e23-5c23-4ae1-bf46-d9031e5a5db6",
       "credentials": {
         "telegramApi": {
           "id": "order-bot",
@@ -28,7 +28,7 @@
       "parameters": {
         "jsCode": "// Node: \"Baca Tombol\"  (Code node, workflow \"Order Approval\", mode: Run Once for All Items)\n// Input : Telegram Trigger (update: callback_query)\n// Callback data dari tombol: \"approve:<id>\" atau \"reject:<id>\" (id = kolom orders.id)\n\nconst OWNER_IDS = [123456789]; // ganti dengan user id Telegram owner/admin\n\nconst cq = $input.first().json.callback_query || {};\nconst [aksi, id] = String(cq.data || '').split(':');\nconst status_baru = aksi === 'approve' ? 'APPROVED_MANUAL' : aksi === 'reject' ? 'REJECTED' : null;\nconst oleh = cq.from?.username ? '@' + cq.from.username : (cq.from?.first_name || 'unknown');\n\nreturn [{\n  json: {\n    aksi,\n    id,\n    status_baru,\n    oleh,\n    berwenang: OWNER_IDS.includes(cq.from?.id) && Boolean(status_baru) && /^\\d+$/.test(id || ''),\n    callback_id: cq.id,\n    chat_id: cq.message?.chat?.id,\n    message_id: cq.message?.message_id,\n    params: [status_baru, oleh, id],\n  },\n}];\n"
       },
-      "id": "d6d9b375-4be8-4a39-94f3-adf1e2ce3c51",
+      "id": "d8c3764a-0c44-4140-b4df-f5a743bf7608",
       "name": "Baca Tombol",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -46,7 +46,7 @@
           "text": "={{ $json.berwenang ? 'Diproses' : 'Kamu tidak punya akses' }}"
         }
       },
-      "id": "2e86f23e-a877-4427-b442-763bce868775",
+      "id": "eb923e04-45a8-4269-b006-d76096a0cac4",
       "name": "Jawab Tombol",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
@@ -71,7 +71,7 @@
           },
           "conditions": [
             {
-              "id": "806ef9b1-8264-46b5-862c-0102778186ba",
+              "id": "c8ad0419-6ab6-4d13-b2fc-5eda3e6a1c1c",
               "leftValue": "={{ $('Baca Tombol').first().json.berwenang }}",
               "rightValue": "",
               "operator": {
@@ -85,7 +85,7 @@
         },
         "options": {}
       },
-      "id": "7db3a5ad-f657-479b-88ee-6ca73e001d75",
+      "id": "38d14f56-8123-4d96-9718-65cb64e1366b",
       "name": "Berwenang?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -102,7 +102,7 @@
           "queryReplacement": "={{ $('Baca Tombol').first().json.params }}"
         }
       },
-      "id": "1a2ae123-db12-4f78-96ea-6cb739272cd3",
+      "id": "5f4fbd31-033f-497c-99da-cc8190ad2ba7",
       "name": "Update Keputusan",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
@@ -128,7 +128,7 @@
           },
           "conditions": [
             {
-              "id": "db3317eb-da4d-44cf-b797-457e9d186344",
+              "id": "a5594acc-3a6c-46a3-8fd9-c9559018c71d",
               "leftValue": "={{ String($json.id ?? '') }}",
               "rightValue": "",
               "operator": {
@@ -142,7 +142,7 @@
         },
         "options": {}
       },
-      "id": "6d3de976-c386-4139-98e2-fc143af47e4d",
+      "id": "951ace93-368b-4b6b-aa54-7be0415d9c29",
       "name": "Sudah Diproses?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -160,7 +160,7 @@
           "reply_to_message_id": "={{ $('Baca Tombol').first().json.message_id }}"
         }
       },
-      "id": "6870e5fc-688e-40cb-bb10-a58149153897",
+      "id": "c827855f-44d5-4c0d-9141-bf3208b9477c",
       "name": "Kabari Owner",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
