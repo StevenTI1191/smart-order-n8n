@@ -2,6 +2,11 @@ name = "smart-order"
 main = "worker/index.js"
 compatibility_date = "2026-11-01"
 
+# Build React dulu (npm run build -> dist) setiap kali `wrangler deploy` dijalankan,
+# jadi website tetap ter-build walaupun "Build command" di dashboard kosong.
+[build]
+command = "npm install && npm run build"
+
 # Website hasil build (npm run build) disajikan dari folder dist.
 # Alamat yang bukan file (mis. /admin) diarahkan ke index.html supaya React yang menentukan halamannya.
 [assets]
