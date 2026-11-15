@@ -31,7 +31,7 @@ const SCENARIOS = {
     total: 7350000,
   }),
   suspicious: () => ({
-    customer: { name: 'asdf123', email: 'x@mailinator.com', phone: phone() },
+    customer: { name: 'Test Test', email: 'x@mailinator.com', phone: phone() },
     shipping_address: { address: 'jl a', city: 'Jakarta', postal_code: '' },
     items: [{ sku: 'PWB-20', name: 'Power Bank 20.000 mAh', qty: 12, price: 175000 }],
     payment_method: 'cod',
