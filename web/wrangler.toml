@@ -25,9 +25,11 @@ custom_domain = true
 #   TURNSTILE_SECRET    = secret key Turnstile (opsional, aktifkan anti-bot di demo)
 [vars]
 N8N_BASE_URL = "https://n8n.sldev.my.id/"
-TURNSTILE_SITE_KEY = ""
-ACCESS_TEAM_DOMAIN = ""   # contoh: namatim.cloudflareaccess.com
-ACCESS_AUD = ""           # Application Audience (AUD) Tag dari aplikasi Cloudflare Access
+# Variabel opsional, tambahkan di sini kalau sudah punya nilainya (jangan dibiarkan kosong:
+# dashboard Cloudflare menolak menyimpan variabel bernilai kosong):
+# TURNSTILE_SITE_KEY = "0x4AAA..."
+# ACCESS_TEAM_DOMAIN = "namatim.cloudflareaccess.com"
+# ACCESS_AUD = "Application Audience (AUD) Tag dari aplikasi Cloudflare Access"
 
 # Demo publik: maksimal 5 pesanan per menit per pengunjung, dan 30 per menit untuk semua pengunjung.
 # Angkanya perkiraan (dihitung per lokasi Cloudflare).
