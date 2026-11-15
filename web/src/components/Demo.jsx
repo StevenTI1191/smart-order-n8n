@@ -223,7 +223,7 @@ export default function Demo() {
           <div className="panel-order" aria-label="Pesanan">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
               <h3 className="panel-title">Pesanan</h3>
-              <span className="tag">{finished ? (result.orderId || (result.kind === 'invalid' ? 'Tidak tercatat' : 'Sudah tercatat')) : running ? 'Mengirim…' : 'Belum dikirim'}</span>
+              <span className="tag">{finished ? (!result.live ? 'Contoh' : result.orderId || (result.kind === 'invalid' ? 'Tidak tercatat' : 'Sudah tercatat')) : running ? 'Mengirim…' : 'Belum dikirim'}</span>
             </div>
             <div className="row" style={{ gap: 14 }}>
               <div className="avatar" style={{ width: 46, height: 46, background: '#DDF2F8', color: '#0E5F75' }}>{initials(cur.f.name)}</div>
