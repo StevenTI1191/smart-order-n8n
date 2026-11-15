@@ -1,4 +1,4 @@
-name = "smart-order"
+name = "smart-order-n8n"
 main = "worker/index.js"
 compatibility_date = "2026-11-01"
 
