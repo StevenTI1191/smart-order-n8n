@@ -2,12 +2,18 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import Landing from './pages/Landing.jsx';
 import Admin from './pages/Admin.jsx';
+import OrderForm from './pages/OrderForm.jsx';
 import './styles.css';
 
-// Dua halaman saja, jadi cukup cek alamat tanpa library router
-const isAdmin = window.location.pathname.replace(/\/+$/, '') === '/admin';
-document.title = isAdmin ? 'Admin · Smart Order' : 'Smart Order – AI agent pemeriksa pesanan';
+// Tiga halaman saja, jadi cukup cek alamat tanpa library router
+const path = window.location.pathname.replace(/\/+$/, '') || '/';
+const PAGES = {
+  '/admin': [Admin, 'Admin · Smart Order'],
+  '/pesan': [OrderForm, 'Form pesanan · Smart Order'],
+};
+const [Page, title] = PAGES[path] || [Landing, 'Smart Order – AI agent pemeriksa pesanan'];
+document.title = title;
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>{isAdmin ? <Admin /> : <Landing />}</StrictMode>,
+  <StrictMode><Page /></StrictMode>,
 );

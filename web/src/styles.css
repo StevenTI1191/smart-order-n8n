@@ -272,3 +272,28 @@ table.orders .num { text-align: right; font-weight: 700; font-variant-numeric: t
   .side-extra, .side-label, .hide-sm { display: none !important; }
   .search { max-width: none; }
 }
+
+/* ---------- form pesanan ---------- */
+.order-page { min-height: 100vh; background: linear-gradient(180deg, #F5FBFD 0%, #fff 320px); }
+.order-grid { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.order-grid > div { flex: 3 1 520px; }
+.order-section { padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+.order-section h2 { font-size: 18px; font-weight: 800; }
+.product-row { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-top: 1px solid var(--soft-2); }
+.product-row:first-of-type { border-top: 0; }
+.stepper { display: flex; align-items: center; gap: 4px; border: 1px solid var(--line-2); border-radius: 12px; padding: 3px; }
+.stepper button { width: 40px; height: 40px; border: 0; border-radius: 9px; background: var(--soft-2); font-size: 20px; font-weight: 700; color: var(--ink); cursor: pointer; }
+.stepper span { min-width: 32px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.field-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.field.wide { grid-column: 1 / -1; }
+.field small { font-weight: 500; color: var(--muted); }
+.field input, .field textarea { font: inherit; font-weight: 500; font-size: 15px; color: var(--ink); border: 1px solid var(--line-2); border-radius: 12px; padding: 11px 12px; background: #fff; resize: vertical; }
+.field input:focus, .field textarea:focus { outline: 3px solid #BFE3EF; border-color: var(--teal); }
+.pay-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.pay-option { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line-2); border-radius: 12px; padding: 12px 14px; cursor: pointer; font-weight: 600; }
+.pay-option:has(input:checked) { border-color: var(--teal); background: var(--info-bg); }
+.pay-option input { accent-color: #0E7490; width: 18px; height: 18px; }
+.order-summary { flex: 2 1 300px; position: sticky; top: 88px; padding: 24px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow-card); }
+.order-done { max-width: 620px; margin: 24px auto; padding: 40px 28px; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; box-shadow: var(--shadow-lift); }
+@media (max-width: 760px) { .order-summary { position: static; } }

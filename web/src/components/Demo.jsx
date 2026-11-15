@@ -336,7 +336,7 @@ export default function Demo() {
           </div>
         </div>
       </div>
-      <p className="live-note">Data pelanggan di demo ini karangan. Pesanan masuk ke antrian admin dan tercatat di audit log.</p>
+      <p className="live-note">Data pelanggan di demo ini adalah contoh. Pesanan demo masuk ke antrian admin dan tercatat di audit log.</p>
     </section>
   );
 }

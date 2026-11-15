@@ -4,18 +4,16 @@ import Demo from '../components/Demo.jsx';
 import { Donut, Bar } from '../components/Charts.jsx';
 import { api } from '../lib/api.js';
 
-const GITHUB = 'https://github.com/StevenTI1191';
-
 const FEATURES = [
-  ['checkbox', 'Validasi otomatis', 'Nomor HP, alamat, item, dan total dicek sebelum diproses. Data rusak langsung ditolak dengan alasan yang jelas.'],
-  ['copy', 'Deteksi pesanan ganda', 'Webhook yang terkirim ulang dan pesanan serupa dalam 30 menit dikenali, jadi tidak ada yang diproses dua kali.'],
+  ['checkbox', 'Validasi dan cek pesanan ganda', 'Nomor HP, alamat, item, dan total dicek sebelum diproses. Pesanan yang terkirim dua kali dikenali dan tidak diproses ulang.'],
   ['gauge', 'Skor risiko transparan', '12 aturan pasti memberi poin. Setiap skor disertai alasan, sehingga keputusan mudah dijelaskan dan diaudit.'],
   ['spark', 'AI hanya saat perlu', 'Pesanan berisiko rendah tidak memakai AI. Kuota gratis Cloudflare Workers AI dipakai hanya untuk kasus janggal.'],
   ['user', 'Owner tetap memegang kendali', 'AI tidak pernah menolak pesanan sendiri. Pesanan berisiko tinggi selalu menunggu Approve atau Reject dari owner.'],
   ['doc', 'Audit log dan laporan', 'Setiap kejadian dicatat lengkap dengan siapa dan kapan, ditambah notifikasi dan ringkasan harian ke Telegram.'],
+  ['send', 'Form untuk WhatsApp & Instagram', 'Jualan lewat chat? Bagikan link form pesanan. Pesanan dari WhatsApp dan Instagram ikut diperiksa otomatis.'],
 ];
 const STEPS = [
-  ['Pesanan masuk', 'Dari website, Shopify, atau aplikasi lain lewat webhook yang dilindungi secret.'],
+  ['Pesanan masuk', 'Dari website, Shopify, atau form pesanan yang dibagikan di WhatsApp dan Instagram.'],
   ['Dicek dan dinilai', 'Validasi data, cek riwayat di PostgreSQL, lalu skor risiko dari aturan pasti.'],
   ['AI untuk yang janggal', 'Hanya pesanan MEDIUM dan HIGH yang dikirim ke AI, tanpa nama, HP, email, dan alamat.'],
   ['Keputusan', 'Pesanan aman disetujui otomatis. Yang berisiko menunggu owner di halaman admin.'],
@@ -63,7 +61,7 @@ export default function Landing() {
             <p className="hero-lead">Smart Order menilai risiko setiap pesanan dengan aturan yang bisa dijelaskan, meminta pendapat AI hanya untuk yang janggal, dan menyerahkan keputusan akhir pesanan berisiko kepada pemilik toko.</p>
             <div className="hero-cta">
               <a className="btn btn-primary btn-lg" href="#demo">Coba demo interaktif <Icon name="arrow" stroke={2.2} /></a>
-              <a className="btn btn-lg" href={GITHUB}><Icon name="code" />Lihat kode</a>
+              <a className="btn btn-lg" href="/pesan"><Icon name="send" />Lihat form pesanan</a>
             </div>
             <div className="checks">
               <span><Icon name="check" size={16} stroke={2.4} color="#0E7490" />Data pribadi tidak dikirim ke AI</span>
@@ -110,14 +108,14 @@ export default function Landing() {
 
       <section className="tech" aria-label="Teknologi" style={{ borderBottom: '1px solid var(--line)' }}>
         <div className="wrap">
-          <span className="tech-label">Dibangun dengan</span>
-          {['n8n', 'PostgreSQL', 'Cloudflare', 'Docker', 'React'].map((t) => <span key={t} className="tech-name">{t}</span>)}
+          <span className="tech-label">Pesanan dari</span>
+          {['Website sendiri', 'Shopify', 'WhatsApp', 'Instagram'].map((t) => <span key={t} className="tech-name">{t}</span>)}
         </div>
       </section>
 
       <section className="wrap" aria-label="Angka utama" style={{ paddingTop: 64, paddingBottom: 24 }}>
         <div className="numbers">
-          {[['12', 'aturan risiko yang bisa dijelaskan'], ['32', 'tes otomatis lulus'], ['0', 'data pribadi dikirim ke AI'], ['Rp0', 'biaya server per bulan']].map(([n, t]) => (
+          {[['12', 'aturan risiko yang bisa dijelaskan'], ['3', 'level risiko: rendah, sedang, tinggi'], ['0', 'data pribadi dikirim ke AI'], ['100%', 'keputusan tercatat di audit log']].map(([n, t]) => (
             <div key={t}><div className="big grad-text">{n}</div><div className="muted">{t}</div></div>
           ))}
         </div>
@@ -164,7 +162,7 @@ export default function Landing() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <span className="eyebrow">Statistik</span>
-            <h2 style={{ fontSize: 'clamp(26px, 5vw, 32px)', fontWeight: 800, letterSpacing: '-.03em' }}>{live ? 'Hasil 30 hari terakhir' : 'Hasil dari data uji'}</h2>
+            <h2 style={{ fontSize: 'clamp(26px, 5vw, 32px)', fontWeight: 800, letterSpacing: '-.03em' }}>{live ? 'Hasil 30 hari terakhir' : 'Contoh statistik'}</h2>
           </div>
           <span style={{ fontSize: 14, color: 'var(--muted)' }}>{stats.total} pesanan · tanpa data pribadi</span>
         </div>
@@ -201,12 +199,12 @@ export default function Landing() {
         <div className="cta">
           <div className="glow" aria-hidden="true" style={{ width: 420, height: 420, right: -120, top: -160, background: 'radial-gradient(circle, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 70%)' }} />
           <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 620 }}>
-            <h2>Lihat cara kerjanya sampai ke kode</h2>
-            <p style={{ fontSize: 17, color: '#E3F1F7' }}>Workflow n8n, query SQL, dan 32 tes otomatis tersedia lengkap di GitHub.</p>
+            <h2>Berhenti cek pesanan satu per satu</h2>
+            <p style={{ fontSize: 17, color: '#E3F1F7' }}>Biarkan Smart Order menyaring pesanan, dan fokuslah pada yang benar-benar perlu keputusanmu.</p>
           </div>
           <div style={{ position: 'relative', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <a className="btn btn-lg" href={GITHUB} style={{ border: 0, color: 'var(--teal-ink)', fontWeight: 800 }}>Buka GitHub</a>
-            <a className="btn btn-lg" href="/admin" style={{ background: 'transparent', borderColor: 'rgba(255,255,255,.55)', color: '#fff' }}>Lihat dashboard admin</a>
+            <a className="btn btn-lg" href="#demo" style={{ border: 0, color: 'var(--teal-ink)', fontWeight: 800 }}>Coba demo</a>
+            <a className="btn btn-lg" href="/admin" style={{ background: 'transparent', borderColor: 'rgba(255,255,255,.55)', color: '#fff' }}>Lihat dashboard</a>
           </div>
         </div>
       </section>
@@ -216,17 +214,17 @@ export default function Landing() {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 40, justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 320 }}>
               <Logo href="#atas" />
-              <p style={{ color: 'var(--muted)', fontSize: 14 }}>Project portfolio AI agent untuk pemeriksaan pesanan toko online.</p>
+              <p style={{ color: 'var(--muted)', fontSize: 14 }}>AI agent yang memeriksa setiap pesanan toko online sebelum diproses.</p>
             </div>
             <div className="footer-cols">
               <div><span style={{ fontWeight: 700 }}>Produk</span><a href="#fitur">Fitur</a><a href="#cara-kerja">Cara kerja</a><a href="#demo">Demo</a></div>
-              <div><span style={{ fontWeight: 700 }}>Teknologi</span><span className="f">n8n · PostgreSQL</span><span className="f">Cloudflare Workers AI</span><span className="f">Docker · React</span></div>
-              <div><span style={{ fontWeight: 700 }}>Pembuat</span><a href={GITHUB}>GitHub</a><a href="https://linkedin.com/in/steven-lim-22b6ba2b2">LinkedIn</a><a href="https://sldev.my.id">sldev.my.id</a></div>
+              <div><span style={{ fontWeight: 700 }}>Untuk penjual</span><a href="/pesan">Form pesanan</a><a href="/admin">Dashboard admin</a></div>
+              <div><span style={{ fontWeight: 700 }}>Keamanan</span><span className="f">Data pribadi tidak ke AI</span><span className="f">Login admin dengan OTP</span></div>
             </div>
           </div>
           <div style={{ borderTop: '1px solid var(--line)', paddingTop: 20, display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', fontSize: 13, color: 'var(--muted)' }}>
-            <span>© {new Date().getFullYear()} Steven Lim</span>
-            <span>Pesanan di website ini adalah data uji, bukan pesanan sungguhan.</span>
+            <span>© {new Date().getFullYear()} Smart Order</span>
+            <span>Pesanan pada demo memakai data contoh.</span>
           </div>
         </div>
       </footer>

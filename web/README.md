@@ -20,7 +20,10 @@ Browser ──▶ Cloudflare Worker (order.sldev.my.id) ──secret──▶ n8
 | --- | --- | --- |
 | `/` | Fitur, cara kerja, demo 5 skenario, statistik 30 hari | Publik |
 | `/admin` | Panel admin. Tanpa login: mode demo dengan data contoh | Publik |
+| `/pesan` | Form pesanan untuk pembeli. Penjual membagikan link ini di WhatsApp atau Instagram | Publik |
 | `/api/admin/*` | Data asli dan keputusan Approve/Reject | Cloudflare Access |
+
+Form pesanan (`/pesan`) memakai daftar produk di `worker/catalog.js`. Harga selalu dihitung di server, dan pembeli hanya melihat status umum ("dikonfirmasi" atau "sedang dicek penjual"), bukan skor risikonya. Ganti isi `catalog.js` dengan produk toko yang memakai Smart Order.
 
 Demo di halaman depan mengirim pesanan dari skenario tetap (`worker/templates.js`) ke n8n. Pengunjung hanya memilih skenario, isi pesanan disusun server. Kalau n8n tidak bisa dihubungi, demo otomatis menampilkan hasil simulasi.
 
@@ -97,6 +100,7 @@ src/
   main.jsx              memilih halaman (/ atau /admin)
   pages/Landing.jsx     halaman depan
   pages/Admin.jsx       panel admin (live atau mode demo)
+  pages/OrderForm.jsx   form pesanan untuk pembeli (/pesan)
   components/Demo.jsx   demo 5 skenario
   components/Charts.jsx cincin skor, donut, bar
   lib/api.js            pemanggil /api/*
@@ -105,6 +109,7 @@ worker/
   index.js              routing API + file website
   access.js             verifikasi login Cloudflare Access (JWT RS256)
   templates.js          isi pesanan tiap skenario demo
+  catalog.js            nama toko, produk, harga, dan metode bayar untuk form pesanan
 ```
 
 ## Catatan keamanan

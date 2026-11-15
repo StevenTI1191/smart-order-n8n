@@ -9,6 +9,8 @@
 //   GET  /api/config              -> site key Turnstile (publik)
 //   GET  /api/stats               -> statistik 30 hari tanpa data pribadi (publik, di-cache)
 //   POST /api/demo-order          -> kirim pesanan demo dari skenario tetap (publik, dibatasi)
+//   GET  /api/catalog             -> produk untuk form pesanan (publik)
+//   POST /api/order               -> form pesanan pembeli, harga dihitung di server (publik, dibatasi)
 //   GET  /api/admin/login         -> pintu login admin, lalu kembali ke /admin (Cloudflare Access)
 //   GET  /api/admin/me            -> email admin yang login        (Cloudflare Access)
 //   GET  /api/admin/orders        -> daftar pesanan + aktivitas     (Cloudflare Access)
@@ -16,6 +18,7 @@
 
 import { verifyAccess } from './access.js';
 import { buildOrder, SCENARIO_KEYS } from './templates.js';
+import { STORE, PRODUCTS, MAX_QTY } from './catalog.js';
 
 const json = (data, status = 200, extra = {}) =>
   new Response(JSON.stringify(data), {
@@ -96,6 +99,51 @@ async function handleApi(request, env, ctx, url) {
       result = await n8n(env, 'webhook/order', { method: 'POST', body: order });
     }
     return json({ ...result.data, order_id: result.data.order_id || order.order_id }, result.status);
+  }
+
+  if (path === '/api/catalog' && request.method === 'GET') {
+    return json({ store: STORE, products: PRODUCTS, maxQty: MAX_QTY }, 200, { 'Cache-Control': 'public, max-age=300' });
+  }
+
+  // Form pesanan untuk pembeli (link yang dibagikan penjual di WhatsApp / Instagram)
+  if (path === '/api/order' && request.method === 'POST') {
+    const body = await request.json().catch(() => ({}));
+    if (await limited(env.DEMO_LIMITER, `order:${ip}`)) {
+      return json({ ok: false, error: 'Terlalu banyak pesanan dalam waktu singkat. Coba lagi sebentar.' }, 429);
+    }
+    if (!(await verifyTurnstile(env, body.turnstileToken, ip))) {
+      return json({ ok: false, error: 'Verifikasi anti-bot gagal. Muat ulang halaman lalu coba lagi.' }, 403);
+    }
+    const str = (v, max) => String(v ?? '').trim().slice(0, max);
+    // Harga dan nama produk dari katalog server, bukan dari browser
+    const items = (Array.isArray(body.items) ? body.items : [])
+      .map((it) => {
+        const p = PRODUCTS.find((x) => x.sku === it?.sku);
+        const qty = Math.floor(Number(it?.qty));
+        return p && qty > 0 ? { sku: p.sku, name: p.name, qty: Math.min(qty, MAX_QTY), price: p.price } : null;
+      })
+      .filter(Boolean);
+    const payment = STORE.payments.some((x) => x.id === body.payment_method) ? body.payment_method : '';
+    const order = {
+      order_id: 'WEB-' + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 900 + 100),
+      source: 'form',
+      customer: { name: str(body.name, 80), email: str(body.email, 120), phone: str(body.phone, 30) },
+      shipping_address: { address: str(body.address, 300), city: str(body.city, 80), postal_code: str(body.postal_code, 10) },
+      items,
+      payment_method: payment,
+      total: items.reduce((a, i) => a + i.qty * i.price, 0),
+      notes: str(body.notes, 300),
+    };
+    const { status, data } = await n8n(env, 'webhook/order', { method: 'POST', body: order });
+    // Pembeli hanya melihat status umum, bukan skor risiko atau alasan internal
+    if (status === 422) return json({ ok: false, errors: data.errors || ['Data pesanan belum lengkap'] }, 422);
+    if (status !== 200 || !data.ok) return json({ ok: false, error: 'Pesanan belum bisa diproses. Coba lagi sebentar.' }, 502);
+    return json({
+      ok: true,
+      order_id: data.order_id || order.order_id,
+      state: data.duplicate ? 'duplicate' : data.status === 'APPROVED_AUTO' ? 'confirmed' : 'review',
+      total: order.total,
+    });
   }
 
   if (path.startsWith('/api/admin/')) {

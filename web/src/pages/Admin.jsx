@@ -75,10 +75,11 @@ export default function Admin() {
       setRows(res.data.orders || []);
       setActivity(res.data.activity || []);
       setLoadError('');
-    } else if (res.status === 401) {
-      setMode('demo');
+    } else if (res.status === 401 || res.status === 0) {
+      // Sesi login habis (Cloudflare Access mengalihkan ke halaman login)
+      setLoadError('Sesi login habis. Klik "Masuk sebagai admin" untuk login lagi.');
     } else {
-      setLoadError(res.data?.error || 'Data tidak bisa dimuat. Cek apakah n8n dan workflow [Order] API aktif.');
+      setLoadError(res.data?.error || 'Data tidak bisa dimuat. Coba lagi beberapa saat.');
     }
   }, []);
 
@@ -228,7 +229,12 @@ export default function Admin() {
               <a className="btn" href="/api/admin/login" style={{ height: 36 }}>Masuk sebagai admin</a>
             </div>
           )}
-          {loadError && <div className="notice tone-bad" role="alert">{loadError}</div>}
+          {loadError && (
+            <div className="notice tone-bad" role="alert" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <span>{loadError}</span>
+              <a className="btn" href="/api/admin/login" style={{ height: 36 }}>Masuk sebagai admin</a>
+            </div>
+          )}
 
           <section style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
             <div>
