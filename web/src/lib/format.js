@@ -21,6 +21,9 @@ export const palette = (name = '') => {
 };
 
 export const LEVEL_COLOR = { LOW: '#2E8A5E', MEDIUM: '#D99A2B', HIGH: '#B3261E' };
+export const LEVEL_ID = { LOW: 'Rendah', MEDIUM: 'Sedang', HIGH: 'Tinggi' };
+export const VERDICT_ID = { APPROVE: 'Setuju', REVIEW: 'Perlu dicek', REJECT: 'Tolak' };
+export const TAG_ID = { new_customer: 'Pelanggan baru', repeat_customer: 'Pelanggan lama', high_value: 'Nilai besar', cod: 'COD', bulk: 'Borongan' };
 export const LEVEL_TONE = { LOW: 'tone-good', MEDIUM: 'tone-warn', HIGH: 'tone-bad' };
 
 export const STATUS = {

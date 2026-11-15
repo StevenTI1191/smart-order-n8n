@@ -6,17 +6,17 @@ import { api } from '../lib/api.js';
 
 const FEATURES = [
   ['checkbox', 'Validasi dan cek pesanan ganda', 'Nomor HP, alamat, item, dan total dicek sebelum diproses. Pesanan yang terkirim dua kali dikenali dan tidak diproses ulang.'],
-  ['gauge', 'Skor risiko transparan', '12 aturan pasti memberi poin. Setiap skor disertai alasan, sehingga keputusan mudah dijelaskan dan diaudit.'],
-  ['spark', 'AI hanya saat perlu', 'Pesanan berisiko rendah tidak memakai AI. Kuota gratis Cloudflare Workers AI dipakai hanya untuk kasus janggal.'],
+  ['gauge', 'Skor risiko transparan', '12 aturan pasti memberi poin. Setiap skor disertai alasan yang bisa dibaca, jadi kamu tahu kenapa pesanan ditahan.'],
+  ['spark', 'AI hanya saat perlu', 'Pesanan berisiko rendah langsung diputuskan aturan. AI hanya dipanggil untuk kasus janggal, jadi cepat dan hemat biaya.'],
   ['user', 'Owner tetap memegang kendali', 'AI tidak pernah menolak pesanan sendiri. Pesanan berisiko tinggi selalu menunggu Approve atau Reject dari owner.'],
-  ['doc', 'Audit log dan laporan', 'Setiap kejadian dicatat lengkap dengan siapa dan kapan, ditambah notifikasi dan ringkasan harian ke Telegram.'],
+  ['doc', 'Audit log dan laporan', 'Setiap keputusan tercatat lengkap dengan siapa dan kapan. Notifikasi pesanan berisiko dan ringkasan harian dikirim ke Telegram.'],
   ['send', 'Form untuk WhatsApp & Instagram', 'Jualan lewat chat? Bagikan link form pesanan. Pesanan dari WhatsApp dan Instagram ikut diperiksa otomatis.'],
 ];
 const STEPS = [
   ['Pesanan masuk', 'Dari website, Shopify, atau form pesanan yang dibagikan di WhatsApp dan Instagram.'],
-  ['Dicek dan dinilai', 'Validasi data, cek riwayat di PostgreSQL, lalu skor risiko dari aturan pasti.'],
-  ['AI untuk yang janggal', 'Hanya pesanan MEDIUM dan HIGH yang dikirim ke AI, tanpa nama, HP, email, dan alamat.'],
-  ['Keputusan', 'Pesanan aman disetujui otomatis. Yang berisiko menunggu owner di halaman admin.'],
+  ['Dicek dan dinilai', 'Data pesanan divalidasi, riwayat pelanggan dicek, lalu skor risiko dihitung dari aturan pasti.'],
+  ['AI untuk yang janggal', 'Hanya pesanan berisiko sedang dan tinggi yang dinilai AI, tanpa nama, nomor HP, email, dan alamat.'],
+  ['Keputusan', 'Pesanan aman disetujui otomatis. Yang berisiko menunggu keputusanmu di dashboard admin.'],
 ];
 // Dipakai kalau statistik server belum bisa diambil
 const SAMPLE = { total: 5, auto_approved: 3, approved_manual: 1, pending: 1, rejected: 0, risk_low: 2, risk_medium: 2, risk_high: 1 };
@@ -73,7 +73,7 @@ export default function Landing() {
             <div className="browser">
               <div className="browser-bar">
                 <i style={{ background: '#F2A99F' }} /><i style={{ background: '#F4D38A' }} /><i style={{ background: '#9ED9B4' }} />
-                <span className="browser-url">order.sldev.my.id/admin</span>
+                <span className="browser-url">Dashboard admin</span>
               </div>
               <div className="browser-body">
                 <div className="mini-stats">
@@ -83,12 +83,12 @@ export default function Landing() {
                 </div>
                 <div className="mini-order">
                   <div className="row">
-                    <span className="avatar" style={{ width: 40, height: 40, fontSize: 14, background: '#DDF2F8', color: '#0E5F75' }}>AS</span>
-                    <div className="grow"><div style={{ fontWeight: 700 }}>asdf123 · ORD-1003</div><div style={{ fontSize: 13, color: 'var(--muted)' }}>20× Smartphone 128GB · COD · Rp2.000.000</div></div>
-                    <span className="pill tone-bad">HIGH 85</span>
+                    <span className="avatar" style={{ width: 40, height: 40, fontSize: 14, background: '#FFF0D9', color: '#8A4B00' }}>AP</span>
+                    <div className="grow"><div className="mini-name">Andi Pratama · ORD-1003</div><div className="mini-sub">12× Power Bank · COD · Rp2.100.000</div></div>
+                    <span className="pill tone-warn">Sedang · 55</span>
                   </div>
                   <div className="chips">
-                    <span className="chip tone-bad">COD besar +25</span><span className="chip tone-bad">Alamat pendek +15</span><span className="chip tone-bad">Nama aneh +15</span>
+                    <span className="chip tone-warn">COD besar +25</span><span className="chip tone-warn">Borongan +15</span><span className="chip tone-warn">Email sekali pakai +15</span>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <span className="fake-btn" style={{ flex: 1, border: '1px solid var(--line-2)', color: 'var(--bad)' }}>Reject</span>
@@ -97,7 +97,7 @@ export default function Landing() {
                 </div>
                 <div className="mini-order" style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <span className="avatar" style={{ width: 40, height: 40, fontSize: 14, background: '#E7F4EC', color: '#146C43' }}>SD</span>
-                  <div className="grow"><div style={{ fontWeight: 700 }}>Sari Dewi · #1005</div><div style={{ fontSize: 13, color: 'var(--muted)' }}>4× Kaos Polos Hitam · Rp320.000</div></div>
+                  <div className="grow"><div className="mini-name">Sari Dewi · #1005</div><div className="mini-sub">4× Kaos Polos Hitam · Rp320.000</div></div>
                   <span className="pill tone-good">Otomatis</span>
                 </div>
               </div>
@@ -106,7 +106,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="tech" aria-label="Teknologi" style={{ borderBottom: '1px solid var(--line)' }}>
+      <section className="tech" aria-label="Sumber pesanan" style={{ borderBottom: '1px solid var(--line)' }}>
         <div className="wrap">
           <span className="tech-label">Pesanan dari</span>
           {['Website sendiri', 'Shopify', 'WhatsApp', 'Instagram'].map((t) => <span key={t} className="tech-name">{t}</span>)}
@@ -184,7 +184,7 @@ export default function Landing() {
           <div className="card stat-card">
             <h3 style={{ fontSize: 17, fontWeight: 700 }}>Level risiko</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {[['LOW', stats.risk_low, '#2E8A5E'], ['MEDIUM', stats.risk_medium, '#D99A2B'], ['HIGH', stats.risk_high, '#B3261E']].map(([l, n, c]) => (
+              {[['Rendah', stats.risk_low, '#2E8A5E'], ['Sedang', stats.risk_medium, '#D99A2B'], ['Tinggi', stats.risk_high, '#B3261E']].map(([l, n, c]) => (
                 <div key={l} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}><span>{l}</span><strong>{n}</strong></div>
                   <Bar value={n} max={riskMax} color={c} />

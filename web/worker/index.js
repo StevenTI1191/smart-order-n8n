@@ -153,6 +153,8 @@ async function handleApi(request, env, ctx, url) {
     if (path === '/api/admin/login') {
       return Response.redirect(new URL(user ? '/admin' : '/admin?login=gagal', url.origin), 302);
     }
+    // Belum login bukan error untuk /me: halaman admin cukup tahu harus tampil mode demo
+    if (!user && path === '/api/admin/me') return json({ ok: false, loggedIn: false });
     if (!user) return json({ ok: false, error: 'Perlu login admin' }, 401);
 
     if (path === '/api/admin/me' && request.method === 'GET') return json({ ok: true, email: user.email });

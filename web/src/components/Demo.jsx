@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Icon from './Icons.jsx';
 import { Ring } from './Charts.jsx';
 import { api, loadTurnstile } from '../lib/api.js';
-import { rp, initials, LEVEL_COLOR, byLabel, parseReason, confidence } from '../lib/format.js';
+import { rp, initials, LEVEL_COLOR, LEVEL_ID, VERDICT_ID, TAG_ID, byLabel, parseReason, confidence } from '../lib/format.js';
 
 // Isi pesanan yang ditampilkan. Sama dengan skenario di worker/templates.js (HP di server diacak).
 const S = {
@@ -19,9 +19,9 @@ const S = {
     sim: { status: 200, data: { ok: true, status: 'APPROVED_AUTO', decided_by: 'ai', risk_score: 55, risk_level: 'MEDIUM', risk_reasons: ['Nilai pesanan besar (+30)', 'COD bernilai besar (+25)'], tags: ['high_value', 'cod', 'new_customer'], ai_verdict: 'APPROVE', ai_confidence: 0.82, ai_reason: 'Contoh jawaban: nilai dan barang wajar, alamat lengkap.' } },
   },
   suspicious: {
-    label: 'Mencurigakan', hint: '20 HP, nama aneh, COD', short: '!', tone: 'tone-bad',
-    f: { name: 'asdf123', phone: '0812-9999-0000', email: 'x@mailinator.com', city: 'Jakarta', address: 'jl a', payment: 'COD', total: 2000000,
-      items: [{ qty: 20, name: 'Smartphone 128GB', price: 100000 }] },
+    label: 'Mencurigakan', hint: 'Borongan, nama aneh, COD', short: '!', tone: 'tone-bad',
+    f: { name: 'asdf123', phone: '0812-9999-0000', email: 'x@mailinator.com', city: 'Jakarta', address: 'jl a', payment: 'COD', total: 2100000,
+      items: [{ qty: 12, name: 'Power Bank 20.000 mAh', price: 175000 }] },
     sim: { status: 200, data: { ok: true, status: 'PENDING_REVIEW', decided_by: 'system', risk_score: 85, risk_level: 'HIGH', risk_reasons: ['COD bernilai besar (+25)', 'Jumlah per item tidak wajar (+15)', 'Alamat terlalu pendek (+15)', 'Email sekali pakai (+15)', 'Nama pelanggan mencurigakan (+15)'], tags: ['cod', 'bulk', 'new_customer'], ai_verdict: 'REVIEW', ai_confidence: 0.74, ai_reason: 'Contoh jawaban: nama dan alamat tidak wajar, barang borongan dengan COD.' } },
   },
   invalid: {
@@ -45,10 +45,10 @@ const AI_STEP = 4;
 function interpret({ status, data }) {
   if (status === 422 || (data.ok === false && Array.isArray(data.errors))) {
     const n = data.errors?.length || 0;
-    return { kind: 'invalid', errors: data.errors || [], flow: ['done', 'error', 'idle', 'idle', 'idle', 'idle'], notes: ['webhook', `${n} error`, '–', '–', '–', '–'] };
+    return { kind: 'invalid', errors: data.errors || [], flow: ['done', 'error', 'idle', 'idle', 'idle', 'idle'], notes: ['masuk', `${n} masalah`, '–', '–', '–', '–'] };
   }
   if (data.duplicate) {
-    return { kind: 'duplicate', flow: ['done', 'done', 'warn', 'skip', 'skip', 'done'], notes: ['webhook', 'lengkap', 'sama persis!', 'dilewati', 'dilewati', 'diabaikan'] };
+    return { kind: 'duplicate', flow: ['done', 'done', 'warn', 'skip', 'skip', 'done'], notes: ['masuk', 'lengkap', 'sama persis', 'dilewati', 'dilewati', 'diabaikan'] };
   }
   const reasons = (data.risk_reasons || []).map(parseReason);
   const similar = reasons.some((r) => /serupa/i.test(r.text));
@@ -58,8 +58,8 @@ function interpret({ status, data }) {
   const aiFailed = verdict && Number(data.ai_confidence) === 0 && /dicek manual/.test(data.ai_reason || '');
 
   let note = 'Risiko rendah, jadi AI tidak dipanggil.';
-  if (!pending && data.decided_by === 'ai') note = `Risiko sedang dan AI yakin aman (confidence ${confidence(data.ai_confidence)}).`;
-  else if (pending && level === 'HIGH') note = 'Risiko tinggi selalu diputuskan owner di halaman Admin.';
+  if (!pending && data.decided_by === 'ai') note = `Risiko sedang dan AI yakin pesanan wajar (keyakinan ${confidence(data.ai_confidence)}).`;
+  else if (pending && level === 'HIGH') note = 'Risiko tinggi selalu diputuskan owner di dashboard admin.';
   else if (pending && similar) note = 'Kemungkinan pesanan ganda selalu dicek owner, apa pun kata AI.';
   else if (pending) note = 'AI belum cukup yakin, jadi owner yang memutuskan.';
 
@@ -73,10 +73,10 @@ function interpret({ status, data }) {
       pending ? 'pending' : 'done',
     ],
     notes: [
-      'webhook', 'lengkap',
-      similar ? 'mirip!' : (data.tags || []).includes('repeat_customer') ? 'pelanggan lama' : 'baru',
-      `${data.risk_score ?? 0} · ${level}`,
-      verdict || 'dilewati',
+      'masuk', 'lengkap',
+      similar ? 'mirip' : (data.tags || []).includes('repeat_customer') ? 'pelanggan lama' : 'baru',
+      `${data.risk_score ?? 0} · ${LEVEL_ID[level]}`,
+      verdict ? VERDICT_ID[verdict] || verdict : 'dilewati',
       pending ? 'ke owner' : 'otomatis',
     ],
     score: data.risk_score ?? 0,
@@ -84,10 +84,10 @@ function interpret({ status, data }) {
     reasons,
     statusLabel: pending ? 'Menunggu owner' : 'Disetujui otomatis',
     statusNote: note,
-    decidedBy: pending ? 'owner (belum)' : byLabel(data.decided_by),
-    aiVerdict: verdict ? `${verdict} · ${confidence(data.ai_confidence)}` : 'tidak dipanggil',
-    aiReason: aiFailed ? 'AI sedang tidak bisa dihubungi, jadi pesanan diarahkan ke owner.' : (data.ai_reason || 'Pesanan LOW cukup diputuskan aturan, hemat kuota AI.'),
-    tags: data.tags || [],
+    decidedBy: pending ? 'owner, lewat dashboard admin' : byLabel(data.decided_by),
+    aiVerdict: verdict ? `${VERDICT_ID[verdict] || verdict} · yakin ${confidence(data.ai_confidence)}` : 'tidak dipanggil',
+    aiReason: aiFailed ? 'AI sedang tidak bisa dihubungi, jadi pesanan diarahkan ke owner.' : (data.ai_reason || 'Risiko rendah cukup diputuskan aturan, tanpa perlu AI.'),
+    tags: (data.tags || []).map((t) => TAG_ID[t] || t),
     orderId: data.order_id,
   };
 }
@@ -182,7 +182,7 @@ export default function Demo() {
       <div className="section-head">
         <span className="eyebrow">Demo interaktif</span>
         <h2 className="section-title">Coba sendiri dengan lima skenario</h2>
-        <p className="section-sub">Pilih skenario, tekan Kirim pesanan, lalu lihat setiap tahap agent bekerja. Pesanan diproses oleh sistem yang sebenarnya.</p>
+        <p className="section-sub">Pilih skenario, tekan Kirim pesanan, lalu lihat setiap tahap pemeriksaan. Pesanan diproses oleh sistem yang sebenarnya.</p>
       </div>
 
       <div role="group" aria-label="Pilih skenario" className="scenarios">
@@ -197,7 +197,7 @@ export default function Demo() {
       <div className="card demo-box">
         <div className="flow-head">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <div style={{ fontWeight: 700 }}>Alur agent</div>
+            <div style={{ fontWeight: 700 }}>Tahap pemeriksaan</div>
             <span className={`pill ${badge[1]}`}>{badge[0]}</span>
           </div>
           <div className="flow-steps">
@@ -223,7 +223,7 @@ export default function Demo() {
           <div className="panel-order" aria-label="Pesanan">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
               <h3 className="panel-title">Pesanan</h3>
-              <span className="tag">{shown?.orderId || 'DEMO-…'}</span>
+              <span className="tag">{finished ? (result.orderId || (result.kind === 'invalid' ? 'Tidak tercatat' : 'Sudah tercatat')) : running ? 'Mengirim…' : 'Belum dikirim'}</span>
             </div>
             <div className="row" style={{ gap: 14 }}>
               <div className="avatar" style={{ width: 46, height: 46, background: '#DDF2F8', color: '#0E5F75' }}>{initials(cur.f.name)}</div>
@@ -272,9 +272,9 @@ export default function Demo() {
             {!finished && (
               <div className="result-idle">
                 <div className={`idle-icon ${running ? 'so-pulse' : ''}`}><Icon name="spark" size={28} /></div>
-                <div style={{ fontWeight: 700, color: 'var(--ink)' }}>{running ? 'Agent sedang bekerja…' : 'Belum ada hasil'}</div>
+                <div style={{ fontWeight: 700, color: 'var(--ink)' }}>{running ? 'Pesanan sedang diperiksa…' : 'Belum ada hasil'}</div>
                 <div style={{ maxWidth: 300 }}>{running
-                  ? (step === AI_STEP ? 'AI sedang menilai pesanan. Biasanya beberapa detik.' : 'Lihat setiap tahap menyala di kartu Alur agent.')
+                  ? (step === AI_STEP ? 'AI sedang menilai pesanan. Biasanya beberapa detik.' : 'Lihat setiap tahap menyala di atas.')
                   : 'Tekan Kirim pesanan untuk melihat skor risiko, alasan, dan keputusan.'}</div>
               </div>
             )}
@@ -283,7 +283,7 @@ export default function Demo() {
               <div className="so-fade" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div className="row">
                   <div className="avatar tone-bad" style={{ width: 48, height: 48 }}><Icon name="x" size={22} stroke={2.2} /></div>
-                  <div><div style={{ fontWeight: 800, fontSize: 18 }}>Ditolak sistem</div><div style={{ fontSize: 13, color: 'var(--muted)' }}>HTTP 422 · tidak memakai kuota AI</div></div>
+                  <div><div style={{ fontWeight: 800, fontSize: 18 }}>Ditolak sistem</div><div style={{ fontSize: 13, color: 'var(--muted)' }}>Data tidak lengkap, tidak diproses</div></div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {result.errors.map((e) => <div key={e} className="err-row"><Icon name="alert" size={16} stroke={2.2} />{e}</div>)}
@@ -297,7 +297,7 @@ export default function Demo() {
                   <div className="avatar tone-warn" style={{ width: 48, height: 48 }}><Icon name="copy" size={22} /></div>
                   <div><div style={{ fontWeight: 800, fontSize: 18 }}>Pesanan ganda dikenali</div><div style={{ fontSize: 13, color: 'var(--muted)' }}>Kiriman kedua tidak diproses ulang</div></div>
                 </div>
-                <p style={{ color: 'var(--ink-2)' }}>Pesanan yang sama dikirim dua kali, seperti webhook toko yang terkirim ulang. Kiriman pertama diproses normal, kiriman kedua hanya dicatat di audit log tanpa skor ulang, tanpa AI, dan tanpa notifikasi ganda.</p>
+                <p style={{ color: 'var(--ink-2)' }}>Pesanan yang sama masuk dua kali, misalnya karena pembeli menekan tombol kirim dua kali. Kiriman pertama diproses normal. Kiriman kedua hanya dicatat di audit log, tanpa dinilai ulang dan tanpa notifikasi ganda.</p>
               </div>
             )}
 
@@ -306,7 +306,7 @@ export default function Demo() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
                   <Ring value={shown.score} color={levelColor} label={`Skor risiko ${shown.score} dari 100`}>
                     <span style={{ fontSize: 34, fontWeight: 800, letterSpacing: '-.03em', lineHeight: 1 }}>{shown.score}</span>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)' }}>{shown.level}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--muted)' }}>{LEVEL_ID[shown.level]}</span>
                   </Ring>
                   <div style={{ flex: '1 1 180px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <span className={`pill ${shown.kind === 'ok' ? 'tone-good' : 'tone-warn'}`} style={{ alignSelf: 'flex-start', fontSize: 15, padding: '6px 14px' }}>{shown.statusLabel}</span>

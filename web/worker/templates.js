@@ -33,9 +33,9 @@ const SCENARIOS = {
   suspicious: () => ({
     customer: { name: 'asdf123', email: 'x@mailinator.com', phone: phone() },
     shipping_address: { address: 'jl a', city: 'Jakarta', postal_code: '' },
-    items: [{ sku: 'HP-01', name: 'Smartphone 128GB', qty: 20, price: 100000 }],
+    items: [{ sku: 'PWB-20', name: 'Power Bank 20.000 mAh', qty: 12, price: 175000 }],
     payment_method: 'cod',
-    total: 2000000,
+    total: 2100000,
   }),
   invalid: () => ({
     customer: { name: 'Dodi', email: 'dodi@gmail.com', phone: '12345' },

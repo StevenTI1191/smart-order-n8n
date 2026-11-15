@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Icon, { Logo } from '../components/Icons.jsx';
 import { Ring, Donut } from '../components/Charts.jsx';
 import { api } from '../lib/api.js';
-import { rp, rpShort, initials, palette, LEVEL_COLOR, LEVEL_TONE, STATUS, byLabel, parseReason, time, confidence, paymentLabel } from '../lib/format.js';
+import { rp, rpShort, initials, palette, LEVEL_COLOR, LEVEL_TONE, LEVEL_ID, VERDICT_ID, STATUS, byLabel, parseReason, time, confidence, paymentLabel } from '../lib/format.js';
 
 const UNDO_SECONDS = 5;
 
@@ -12,7 +12,7 @@ const SAMPLE_ORDERS = [
   { id: 6, order_id: 'ORD-1006', customer_name: 'Budi Santoso', city: 'Pekanbaru', total: 230000, payment_method: 'transfer', items: [{ qty: 2, name: 'Kopi Arabika' }, { qty: 1, name: 'Gelas Kaca' }], risk_level: 'MEDIUM', risk_score: 30, status: 'PENDING_REVIEW', decided_by: 'system', created_at: ago(4),
     risk_reasons: ['Pesanan serupa (HP dan total sama) dalam 30 menit (+30)'], ai_verdict: 'APPROVE', ai_confidence: 0.9, ai_reason: 'Contoh: pola wajar. Tetap ke owner karena kemungkinan pesanan ganda.' },
   { id: 5, order_id: '#1005', customer_name: 'Sari Dewi', city: 'Pekanbaru', total: 320000, payment_method: 'card', items: [{ qty: 4, name: 'Kaos Polos Hitam' }], risk_level: 'LOW', risk_score: 0, status: 'APPROVED_AUTO', decided_by: 'rules', created_at: ago(5), risk_reasons: [] },
-  { id: 3, order_id: 'ORD-1003', customer_name: 'asdf123', city: 'Jakarta', total: 2000000, payment_method: 'cod', items: [{ qty: 20, name: 'Smartphone 128GB' }], risk_level: 'HIGH', risk_score: 85, status: 'PENDING_REVIEW', decided_by: 'system', created_at: ago(6),
+  { id: 3, order_id: 'ORD-1003', customer_name: 'asdf123', city: 'Jakarta', total: 2100000, payment_method: 'cod', items: [{ qty: 12, name: 'Power Bank 20.000 mAh' }], risk_level: 'HIGH', risk_score: 85, status: 'PENDING_REVIEW', decided_by: 'system', created_at: ago(6),
     risk_reasons: ['COD bernilai besar (+25)', 'Jumlah per item tidak wajar (+15)', 'Alamat terlalu pendek (+15)', 'Email sekali pakai (+15)', 'Nama pelanggan mencurigakan (+15)'], ai_verdict: 'REVIEW', ai_confidence: 0.74, ai_reason: 'Contoh: nama dan alamat tidak wajar, barang borongan dengan COD.' },
   { id: 2, order_id: 'ORD-1002', customer_name: 'Rina Wulandari', city: 'Dumai', total: 7350000, payment_method: 'cod', items: [{ qty: 1, name: 'Laptop 14 inci' }, { qty: 1, name: 'Mouse Wireless' }], risk_level: 'MEDIUM', risk_score: 55, status: 'APPROVED_AUTO', decided_by: 'ai', created_at: ago(7), risk_reasons: ['Nilai pesanan besar (+30)', 'COD bernilai besar (+25)'], ai_verdict: 'APPROVE', ai_confidence: 0.82 },
   { id: 1, order_id: 'ORD-1001', customer_name: 'Budi Santoso', city: 'Pekanbaru', total: 230000, payment_method: 'transfer', items: [{ qty: 2, name: 'Kopi Arabika' }, { qty: 1, name: 'Gelas Kaca' }], risk_level: 'LOW', risk_score: 0, status: 'APPROVED_AUTO', decided_by: 'rules', created_at: ago(8), risk_reasons: [] },
@@ -49,7 +49,7 @@ function view(o) {
     by: byLabel(o.decided_by),
     time: time(o.created_at),
     reasons: (o.risk_reasons || []).map(parseReason).map((r) => `${r.text} ${r.pts > 0 ? '+' : ''}${r.pts}`),
-    ai: o.ai_verdict ? `${o.ai_verdict} · ${confidence(o.ai_confidence)}` : 'tidak dipanggil',
+    ai: o.ai_verdict ? `${VERDICT_ID[o.ai_verdict] || o.ai_verdict} · yakin ${confidence(o.ai_confidence)}` : 'tidak dipanggil',
     aiReason: o.ai_reason || 'Risiko rendah, AI tidak dipanggil.',
   };
 }
@@ -66,6 +66,7 @@ export default function Admin() {
   const [toast, setToast] = useState(null); // { text, error, undo }
   const [countdown, setCountdown] = useState(0);
   const [loadError, setLoadError] = useState('');
+  const [copied, setCopied] = useState(false);
   const pendingRef = useRef(null); // { order, decision, timer }
   const loginFailed = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('login') === 'gagal';
 
@@ -155,6 +156,13 @@ export default function Admin() {
     setToast(null);
   }
 
+  async function copyFormLink() {
+    const link = window.location.origin + '/pesan';
+    try { await navigator.clipboard.writeText(link); } catch { window.prompt('Salin link form pesanan:', link); return; }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   const q = query.trim().toLowerCase();
   const match = (o) => !q || o.id.toLowerCase().includes(q) || o.customer.toLowerCase().includes(q);
   const queue = orders.filter((o) => o.status === 'PENDING_REVIEW' && match(o)).sort((a, b) => b.score - a.score);
@@ -192,9 +200,9 @@ export default function Admin() {
             </div>
           ) : (
             <div className="demo-card">
-              <span style={{ fontWeight: 700 }}>Data asli</span>
-              <span style={{ fontSize: 13, color: '#E3F1F7' }}>Setiap keputusan tersimpan di database dan audit log.</span>
-              <a href="/">Buka website publik</a>
+              <span style={{ fontWeight: 700 }}>Link form pesanan</span>
+              <span style={{ fontSize: 13, color: '#E3F1F7' }}>Bagikan di WhatsApp atau bio Instagram. Pesanan yang masuk langsung diperiksa.</span>
+              <button type="button" onClick={copyFormLink}>{copied ? 'Link disalin' : 'Salin link'}</button>
             </div>
           )}
         </div>
@@ -207,7 +215,7 @@ export default function Admin() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <label className="search">
                 <Icon name="search" size={16} />
-                <input type="search" aria-label="Cari pesanan" placeholder="Cari ID atau nama pelanggan" value={query} onChange={(e) => setQuery(e.target.value)} />
+                <input type="search" aria-label="Cari pesanan" placeholder="Cari pesanan atau pelanggan" value={query} onChange={(e) => setQuery(e.target.value)} />
               </label>
               <a className="icon-btn" href="#antrian" aria-label={`${pend} pesanan menunggu keputusan`}><Icon name="bell" />{pend > 0 && <span className="dot" />}</a>
               {mode === 'live' && <button type="button" className="icon-btn" aria-label="Muat ulang" onClick={load}><Icon name="refresh" /></button>}
@@ -286,12 +294,13 @@ export default function Admin() {
                 const chip = LEVEL_TONE[o.level];
                 return (
                   <article key={o.dbId} className="card qcard so-fade">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                       <div className="avatar" style={{ width: 48, height: 48, background: bg, color: fg }}>{initials(o.customer)}</div>
-                      <div style={{ flex: '1 1 200px', minWidth: 0 }}>
+                      <div style={{ flex: '1 1 0', minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                           <span style={{ fontWeight: 800, fontSize: 17 }}>{o.customer}</span>
                           <span style={{ fontSize: 13, color: 'var(--muted)' }}>{o.id} · {o.time}</span>
+                          <span className={`pill ${chip}`}>Risiko {LEVEL_ID[o.level].toLowerCase()}</span>
                         </div>
                         <div style={{ fontSize: 14, color: 'var(--ink-2)' }}>{o.items}</div>
                       </div>
@@ -299,7 +308,7 @@ export default function Admin() {
                         <span style={{ fontWeight: 800, fontSize: 15 }}>{o.score}</span>
                       </Ring>
                     </div>
-                    <div className="facts">
+                    <div className="facts facts-3">
                       <div><small>Total</small><b style={{ fontWeight: 800 }}>{o.total}</b></div>
                       <div><small>Bayar</small><b>{o.payment}</b></div>
                       <div><small>Kirim ke</small><b>{o.city}</b></div>
@@ -363,18 +372,18 @@ export default function Admin() {
               <table className="orders">
                 <thead><tr><th>Pelanggan</th><th>Pesanan</th><th style={{ textAlign: 'right' }}>Total</th><th>Risiko</th><th>Status</th><th>Oleh</th></tr></thead>
                 <tbody>
-                  {table.length === 0 && <tr><td colSpan={6} className="muted" style={{ textAlign: 'center', padding: 28 }}>Tidak ada pesanan.</td></tr>}
+                  {table.length === 0 && <tr className="tr-empty"><td colSpan={6} className="muted" style={{ textAlign: 'center', padding: 28 }}>Tidak ada pesanan.</td></tr>}
                   {table.map((o) => {
                     const [bg, fg] = palette(o.customer);
                     const st = STATUS[o.status] || { label: o.status, tone: 'tone-neutral' };
                     return (
                       <tr key={o.dbId}>
-                        <td><div className="row" style={{ gap: 10 }}><div className="avatar" style={{ width: 32, height: 32, fontSize: 12, background: bg, color: fg }}>{initials(o.customer)}</div><span style={{ fontWeight: 600 }}>{o.customer}</span></div></td>
-                        <td style={{ color: 'var(--ink-2)' }}>{o.id} · {o.time}</td>
+                        <td><div className="row" style={{ gap: 10 }}><div className="avatar" style={{ width: 32, height: 32, fontSize: 12, background: bg, color: fg }}>{initials(o.customer)}</div><span style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{o.customer}</span></div></td>
+                        <td className="td-order"><span>{o.items}</span><small>{o.id} · {o.time}</small></td>
                         <td className="num">{o.total}</td>
-                        <td><div className="row" style={{ gap: 8 }}><div style={{ width: 56, height: 6, borderRadius: 999, background: '#F1F5F8', overflow: 'hidden' }}><div style={{ height: '100%', borderRadius: 999, background: LEVEL_COLOR[o.level], width: Math.max(4, Math.min(100, o.score)) + '%' }} /></div><span style={{ fontSize: 13, fontWeight: 600 }}>{o.score}</span></div></td>
+                        <td className="td-risk"><div className="row" style={{ gap: 8 }}><div style={{ width: 56, height: 6, borderRadius: 999, background: '#F1F5F8', overflow: 'hidden' }}><div style={{ height: '100%', borderRadius: 999, background: LEVEL_COLOR[o.level], width: Math.max(4, Math.min(100, o.score)) + '%' }} /></div><span style={{ fontSize: 13, fontWeight: 600 }}>{o.score}</span><span className="lvl">{LEVEL_ID[o.level]}</span></div></td>
                         <td><span className={`pill ${st.tone}`}>{st.label}</span></td>
-                        <td style={{ color: 'var(--ink-2)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.by}</td>
+                        <td className="td-by">{o.by}</td>
                       </tr>
                     );
                   })}
