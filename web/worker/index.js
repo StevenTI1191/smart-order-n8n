@@ -28,7 +28,9 @@ const json = (data, status = 200, extra = {}) =>
 
 // Memanggil webhook n8n dengan secret
 async function n8n(env, path, { method = 'GET', body, query } = {}) {
-  if (!env.N8N_BASE_URL || !env.N8N_WEBHOOK_SECRET) throw new Error('N8N_BASE_URL / N8N_WEBHOOK_SECRET belum diatur');
+  if (!env.N8N_BASE_URL || !env.N8N_WEBHOOK_SECRET) {
+    throw Object.assign(new Error('N8N_BASE_URL / N8N_WEBHOOK_SECRET belum diatur'), { publicCode: 'config_missing' });
+  }
   const url = new URL(path, env.N8N_BASE_URL.replace(/\/?$/, '/'));
   if (query) for (const [k, v] of Object.entries(query)) if (v) url.searchParams.set(k, v);
   const res = await fetch(url, {
@@ -186,7 +188,9 @@ export default {
         return await handleApi(request, env, ctx, url);
       } catch (err) {
         console.error(url.pathname, 'gagal:', err?.stack || err);
-        return json({ ok: false, error: 'Server sedang bermasalah' }, 502);
+        // Kode singkat membantu owner mendiagnosis tanpa membuka log; tidak membocorkan isi secret
+        const code = err?.publicCode || (err?.name === 'TimeoutError' ? 'n8n_timeout' : 'n8n_unreachable');
+        return json({ ok: false, error: 'Server sedang bermasalah', code }, 502);
       }
     }
     // File website (React). Alamat yang tidak cocok dengan file diarahkan ke index.html.
