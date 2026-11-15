@@ -28,7 +28,7 @@ const ACTION_TEXT = {
   APPROVED_AUTO: 'disetujui otomatis', APPROVED_MANUAL: 'disetujui owner', PENDING_REVIEW: 'masuk antrian review',
   REJECTED: 'ditolak', DUPLICATE: 'terkirim ulang, diabaikan', INVALID: 'ditolak karena data rusak',
 };
-const DOT = { REJECTED: '#FB7185', INVALID: '#FB7185', PENDING_REVIEW: '#FBBF24', DUPLICATE: '#FBBF24', APPROVED_MANUAL: '#22D3EE' };
+const DOT = { REJECTED: '#E08294', INVALID: '#E08294', PENDING_REVIEW: '#E2B556', DUPLICATE: '#E2B556', APPROVED_MANUAL: '#5CC6DC' };
 
 // Baris database -> bentuk untuk tampilan
 function view(o) {
@@ -220,7 +220,7 @@ export default function Admin() {
               <a className="icon-btn" href="#antrian" aria-label={`${pend} pesanan menunggu keputusan`}><Icon name="bell" />{pend > 0 && <span className="dot" />}</a>
               {mode === 'live' && <button type="button" className="icon-btn" aria-label="Muat ulang" onClick={load}><Icon name="refresh" /></button>}
               <div className="who">
-                <div className="avatar" style={{ width: 38, height: 38, fontSize: 14, background: 'rgba(34,211,238,.14)', color: '#67E8F9', border: '1px solid rgba(34,211,238,.5)' }}>{mode === 'live' ? initials(email.split('@')[0]) : 'D'}</div>
+                <div className="avatar" style={{ width: 38, height: 38, fontSize: 14, background: 'rgba(92,198,220,0.084)', color: '#8AD6E6', border: '1px solid rgba(92,198,220,0.3)' }}>{mode === 'live' ? initials(email.split('@')[0]) : 'D'}</div>
                 <div className="who-name hide-sm">
                   <b>{mode === 'live' ? email : 'Pengunjung'}</b>
                   {mode === 'live' ? <a href="/cdn-cgi/access/logout" style={{ fontSize: 11 }}>Keluar</a> : <small>mode demo</small>}
@@ -255,11 +255,11 @@ export default function Admin() {
           </section>
 
           <section aria-label="Ringkasan" className="kpis">
-            <Kpi title="Menunggu review" icon="clock" tone="tone-warn" value={pend} bar={pct(pend)} color="#FBBF24" />
-            <Kpi title="Disetujui otomatis" icon="spark" tone="tone-good" value={<>{auto} <span style={{ fontSize: 16, color: 'var(--muted)', fontWeight: 600 }}>{pct(auto)}%</span></>} bar={pct(auto)} color="#34D399" />
-            <Kpi title="Diputuskan owner" icon="user" tone="tone-info" value={am + rej} bar={pct(am + rej)} color="#22D3EE" />
+            <Kpi title="Menunggu review" icon="clock" tone="tone-warn" value={pend} bar={pct(pend)} color="#E2B556" />
+            <Kpi title="Disetujui otomatis" icon="spark" tone="tone-good" value={<>{auto} <span style={{ fontSize: 16, color: 'var(--muted)', fontWeight: 600 }}>{pct(auto)}%</span></>} bar={pct(auto)} color="#5FC49A" />
+            <Kpi title="Diputuskan owner" icon="user" tone="tone-info" value={am + rej} bar={pct(am + rej)} color="#5CC6DC" />
             <div className="kpi dark">
-              <div className="kpi-head"><span>Nilai disetujui</span><div className="kpi-icon" style={{ background: 'rgba(34,211,238,.12)', color: '#67E8F9' }}><Icon name="trend" /></div></div>
+              <div className="kpi-head"><span>Nilai disetujui</span><div className="kpi-icon" style={{ background: 'rgba(92,198,220,0.072)', color: '#8AD6E6' }}><Icon name="trend" /></div></div>
               <span style={{ fontSize: 'clamp(18px, 4vw, 30px)', fontWeight: 800, letterSpacing: '-.03em', lineHeight: 1.1, whiteSpace: 'nowrap' }} title={rp(value)}>{value >= 10_000_000 ? rpShort(value) : rp(value)}</span>
               <span style={{ fontSize: 13, color: 'var(--muted)' }}>dari {total} pesanan</span>
             </div>
@@ -268,7 +268,7 @@ export default function Admin() {
           {toast && (
             <div role="status" className={`toast so-fade ${toast.error ? 'error' : ''}`}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Icon name={toast.error ? 'alert' : 'check'} stroke={2.2} color={toast.error ? '#FDA4AF' : '#6EE7B7'} />{toast.text}
+                <Icon name={toast.error ? 'alert' : 'check'} stroke={2.2} color={toast.error ? '#EDA9B5' : '#8ED6B5'} />{toast.text}
               </span>
               {toast.undo && pendingRef.current
                 ? <button type="button" onClick={undo}>Batalkan{countdown ? ` (${countdown})` : ''}</button>
@@ -347,7 +347,7 @@ export default function Admin() {
                   {feed.length === 0 && <span className="muted">Belum ada aktivitas.</span>}
                   {feed.map((e, i) => (
                     <div key={(e.key || e.created_at) + e.order_id + i} className="feed-item so-fade">
-                      <div className="feed-dot" style={{ background: DOT[e.action] || '#34D399', boxShadow: `0 0 8px ${DOT[e.action] || '#34D399'}` }} />
+                      <div className="feed-dot" style={{ background: DOT[e.action] || '#5FC49A' }} />
                       <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                         <span style={{ fontSize: 14 }}><strong>{e.order_id}</strong> {ACTION_TEXT[e.action] || e.action.toLowerCase()}</span>
                         <span style={{ fontSize: 12, color: 'var(--muted)', overflowWrap: 'anywhere' }}>{byLabel(e.actor)} · {time(e.created_at)}</span>

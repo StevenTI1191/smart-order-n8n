@@ -174,8 +174,8 @@ export default function Demo() {
   const badge = finished
     ? result.kind === 'invalid' ? ['Ditolak', 'tone-bad'] : result.kind === 'pending' ? ['Menunggu owner', 'tone-warn'] : result.kind === 'duplicate' ? ['Duplikat dikenali', 'tone-warn'] : ['Selesai', 'tone-good']
     : running ? ['Memproses…', 'tone-info'] : ['Siap', 'tone-info'];
-  const levelColor = LEVEL_COLOR[shown?.level] || '#34D399';
-  const tiles = ['rgba(34,211,238,.12)|#67E8F9', 'rgba(129,140,248,.16)|#A5B4FC', 'rgba(52,211,153,.12)|#6EE7B7'];
+  const levelColor = LEVEL_COLOR[shown?.level] || '#5FC49A';
+  const tiles = ['rgba(92,198,220,0.072)|#8AD6E6', 'rgba(142,155,230,0.096)|#A5B4FC', 'rgba(95,196,154,0.072)|#8ED6B5'];
 
   return (
     <section id="demo" className="wrap" style={{ paddingTop: 72, paddingBottom: 72, display: 'flex', flexDirection: 'column', gap: 28 }}>
@@ -226,14 +226,14 @@ export default function Demo() {
               <span className="tag">{finished ? (result.orderId || (result.kind === 'invalid' ? 'Tidak tercatat' : 'Sudah tercatat')) : running ? 'Mengirim…' : 'Belum dikirim'}</span>
             </div>
             <div className="row" style={{ gap: 14 }}>
-              <div className="avatar" style={{ width: 46, height: 46, background: 'rgba(34,211,238,.12)', color: '#67E8F9', border: '1px solid rgba(34,211,238,.45)' }}>{initials(cur.f.name)}</div>
+              <div className="avatar" style={{ width: 46, height: 46, background: 'rgba(92,198,220,0.072)', color: '#8AD6E6', border: '1px solid rgba(92,198,220,0.27)' }}>{initials(cur.f.name)}</div>
               <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontWeight: 700 }}>{cur.f.name}</span>
                 <span style={{ fontSize: 13, color: 'var(--muted)', overflowWrap: 'anywhere' }}>{cur.f.phone} · {cur.f.email}</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: 'var(--ink-2)' }}>
-              <Icon name="pin" color="#22D3EE" style={{ marginTop: 3, flex: 'none' }} />
+              <Icon name="pin" color="#5CC6DC" style={{ marginTop: 3, flex: 'none' }} />
               <span>{cur.f.address}<span className="muted"> · {cur.f.city || 'kota kosong'}</span></span>
             </div>
             <div className="divider-top" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -319,7 +319,7 @@ export default function Demo() {
                   {shown.reasons.length ? shown.reasons.map((x) => (
                     <div key={x.text} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 14 }}><span>{x.text}</span><span style={{ fontWeight: 700 }}>{x.pts > 0 ? '+' : ''}{x.pts}</span></div>
-                      <div className="bar-track"><div className="bar-fill" style={{ background: x.pts < 0 ? '#34D399' : levelColor, boxShadow: `0 0 10px ${levelColor}88`, width: Math.min(100, Math.round((Math.abs(x.pts) / 30) * 100)) + '%' }} /></div>
+                      <div className="bar-track"><div className="bar-fill" style={{ background: x.pts < 0 ? '#5FC49A' : levelColor, width: Math.min(100, Math.round((Math.abs(x.pts) / 30) * 100)) + '%' }} /></div>
                     </div>
                   )) : <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--good)', fontWeight: 600 }}><Icon name="check" size={16} stroke={2.2} />Tidak ada tanda risiko</div>}
                 </div>

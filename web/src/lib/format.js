@@ -13,14 +13,14 @@ export const rpShort = (n) => {
 export const initials = (name = '') =>
   name.trim().split(/\s+/).map((w) => w.charAt(0)).join('').slice(0, 2).toUpperCase() || '?';
 
-const PALETTE = [['rgba(34,211,238,.12)', '#67E8F9'], ['rgba(129,140,248,.16)', '#A5B4FC'], ['rgba(52,211,153,.12)', '#6EE7B7'], ['rgba(251,191,36,.12)', '#FCD34D']];
+const PALETTE = [['rgba(92,198,220,0.072)', '#8AD6E6'], ['rgba(142,155,230,0.096)', '#A5B4FC'], ['rgba(95,196,154,0.072)', '#8ED6B5'], ['rgba(226,181,86,0.072)', '#EACB82']];
 export const palette = (name = '') => {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h + name.charCodeAt(i)) % PALETTE.length;
   return PALETTE[h];
 };
 
-export const LEVEL_COLOR = { LOW: '#34D399', MEDIUM: '#FBBF24', HIGH: '#FB7185' };
+export const LEVEL_COLOR = { LOW: '#5FC49A', MEDIUM: '#E2B556', HIGH: '#E08294' };
 export const LEVEL_ID = { LOW: 'Rendah', MEDIUM: 'Sedang', HIGH: 'Tinggi' };
 export const VERDICT_ID = { APPROVE: 'Setuju', REVIEW: 'Perlu dicek', REJECT: 'Tolak' };
 export const TAG_ID = { new_customer: 'Pelanggan baru', repeat_customer: 'Pelanggan lama', high_value: 'Nilai besar', cod: 'COD', bulk: 'Borongan' };
@@ -28,10 +28,10 @@ export const TRACK = 'rgba(148,163,184,.16)';
 export const LEVEL_TONE = { LOW: 'tone-good', MEDIUM: 'tone-warn', HIGH: 'tone-bad' };
 
 export const STATUS = {
-  APPROVED_AUTO: { label: 'Otomatis', tone: 'tone-good', color: '#34D399' },
-  APPROVED_MANUAL: { label: 'Disetujui owner', tone: 'tone-info', color: '#22D3EE' },
-  PENDING_REVIEW: { label: 'Menunggu', tone: 'tone-warn', color: '#FBBF24' },
-  REJECTED: { label: 'Ditolak', tone: 'tone-bad', color: '#FB7185' },
+  APPROVED_AUTO: { label: 'Otomatis', tone: 'tone-good', color: '#5FC49A' },
+  APPROVED_MANUAL: { label: 'Disetujui owner', tone: 'tone-info', color: '#5CC6DC' },
+  PENDING_REVIEW: { label: 'Menunggu', tone: 'tone-warn', color: '#E2B556' },
+  REJECTED: { label: 'Ditolak', tone: 'tone-bad', color: '#E08294' },
 };
 
 // decided_by di database -> teks yang mudah dibaca

@@ -52,8 +52,8 @@ export default function Landing() {
       </header>
 
       <section id="atas" className="hero">
-        <div className="glow" aria-hidden="true" style={{ width: 640, height: 640, right: -140, top: -220, background: 'radial-gradient(circle, rgba(34,211,238,.20) 0%, rgba(5,8,15,0) 68%)' }} />
-        <div className="glow" aria-hidden="true" style={{ width: 520, height: 520, left: '38%', top: 220, background: 'radial-gradient(circle, rgba(167,139,250,.16) 0%, rgba(5,8,15,0) 68%)' }} />
+        <div className="glow" aria-hidden="true" style={{ width: 640, height: 640, right: -140, top: -220, background: 'radial-gradient(circle, rgba(92,198,220,0.12) 0%, rgba(5,8,15,0) 68%)' }} />
+        <div className="glow" aria-hidden="true" style={{ width: 520, height: 520, left: '38%', top: 220, background: 'radial-gradient(circle, rgba(164,151,227,0.096) 0%, rgba(5,8,15,0) 68%)' }} />
         <div className="wrap">
           <div className="hero-copy">
             <span className="badge-new"><i aria-hidden="true" />AI agent untuk toko online</span>
@@ -64,15 +64,15 @@ export default function Landing() {
               <a className="btn btn-lg" href="/pesan"><Icon name="send" />Lihat form pesanan</a>
             </div>
             <div className="checks">
-              <span><Icon name="check" size={16} stroke={2.4} color="#34D399" />Data pribadi tidak dikirim ke AI</span>
-              <span><Icon name="check" size={16} stroke={2.4} color="#34D399" />Setiap keputusan tercatat</span>
+              <span><Icon name="check" size={16} stroke={2.4} color="#5FC49A" />Data pribadi tidak dikirim ke AI</span>
+              <span><Icon name="check" size={16} stroke={2.4} color="#5FC49A" />Setiap keputusan tercatat</span>
             </div>
           </div>
 
           <div className="hero-shot" aria-hidden="true">
             <div className="browser">
               <div className="browser-bar">
-                <i style={{ background: '#FB7185' }} /><i style={{ background: '#FBBF24' }} /><i style={{ background: '#34D399' }} />
+                <i style={{ background: '#E08294' }} /><i style={{ background: '#E2B556' }} /><i style={{ background: '#5FC49A' }} />
                 <span className="browser-url">Dashboard admin</span>
               </div>
               <div className="browser-body">
@@ -83,7 +83,7 @@ export default function Landing() {
                 </div>
                 <div className="mini-order warn">
                   <div className="row">
-                    <span className="avatar" style={{ width: 40, height: 40, fontSize: 14, background: 'rgba(251,191,36,.12)', color: '#FCD34D', border: '1px solid rgba(251,191,36,.5)' }}>AP</span>
+                    <span className="avatar" style={{ width: 40, height: 40, fontSize: 14, background: 'rgba(226,181,86,0.072)', color: '#EACB82', border: '1px solid rgba(226,181,86,0.3)' }}>AP</span>
                     <div className="grow"><div className="mini-name">Andi Pratama · ORD-1003</div><div className="mini-sub">12× Power Bank · COD · Rp2.100.000</div></div>
                     <span className="pill tone-warn">Sedang · 55</span>
                   </div>
@@ -96,7 +96,7 @@ export default function Landing() {
                   </div>
                 </div>
                 <div className="mini-order" style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <span className="avatar" style={{ width: 40, height: 40, fontSize: 14, background: 'rgba(52,211,153,.12)', color: '#6EE7B7', border: '1px solid rgba(52,211,153,.5)' }}>SD</span>
+                  <span className="avatar" style={{ width: 40, height: 40, fontSize: 14, background: 'rgba(95,196,154,0.072)', color: '#8ED6B5', border: '1px solid rgba(95,196,154,0.3)' }}>SD</span>
                   <div className="grow"><div className="mini-name">Sari Dewi · #1005</div><div className="mini-sub">4× Kaos Polos Hitam · Rp320.000</div></div>
                   <span className="pill tone-good">Otomatis</span>
                 </div>
@@ -172,19 +172,19 @@ export default function Landing() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap' }}>
               <Donut size={150} r={54} stroke={18} total={stats.total}
                 label={`${stats.auto_approved} otomatis, ${stats.approved_manual} disetujui owner, ${stats.pending} menunggu, ${stats.rejected} ditolak`}
-                segments={[{ value: stats.auto_approved, color: '#34D399' }, { value: stats.approved_manual, color: '#22D3EE' }, { value: stats.pending, color: '#FBBF24' }, { value: stats.rejected, color: '#FB7185' }]} />
+                segments={[{ value: stats.auto_approved, color: '#5FC49A' }, { value: stats.approved_manual, color: '#5CC6DC' }, { value: stats.pending, color: '#E2B556' }, { value: stats.rejected, color: '#E08294' }]} />
               <div className="legend">
-                <div><i style={{ background: '#34D399' }} />Disetujui otomatis <strong>{stats.auto_approved} · {pct(stats.auto_approved)}%</strong></div>
-                <div><i style={{ background: '#22D3EE' }} />Disetujui owner <strong>{stats.approved_manual}</strong></div>
-                <div><i style={{ background: '#FBBF24' }} />Menunggu <strong>{stats.pending}</strong></div>
-                <div><i style={{ background: '#FB7185' }} />Ditolak <strong>{stats.rejected}</strong></div>
+                <div><i style={{ background: '#5FC49A' }} />Disetujui otomatis <strong>{stats.auto_approved} · {pct(stats.auto_approved)}%</strong></div>
+                <div><i style={{ background: '#5CC6DC' }} />Disetujui owner <strong>{stats.approved_manual}</strong></div>
+                <div><i style={{ background: '#E2B556' }} />Menunggu <strong>{stats.pending}</strong></div>
+                <div><i style={{ background: '#E08294' }} />Ditolak <strong>{stats.rejected}</strong></div>
               </div>
             </div>
           </div>
           <div className="card stat-card">
             <h3 style={{ fontSize: 17, fontWeight: 700 }}>Level risiko</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {[['Rendah', stats.risk_low, '#34D399'], ['Sedang', stats.risk_medium, '#FBBF24'], ['Tinggi', stats.risk_high, '#FB7185']].map(([l, n, c]) => (
+              {[['Rendah', stats.risk_low, '#5FC49A'], ['Sedang', stats.risk_medium, '#E2B556'], ['Tinggi', stats.risk_high, '#E08294']].map(([l, n, c]) => (
                 <div key={l} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}><span>{l}</span><strong>{n}</strong></div>
                   <Bar value={n} max={riskMax} color={c} />
