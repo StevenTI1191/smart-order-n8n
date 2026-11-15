@@ -92,6 +92,12 @@ test('pelanggan lama mengurangi skor dan tidak di bawah 0', () => {
   assert(s.tags.includes('repeat_customer'));
 });
 
+test('skor tidak pernah lebih dari 100 walau banyak tanda risiko', () => {
+  const s = score('03-mencurigakan.json', { ...NO_HISTORY, near_dup: 1, prior_rejected: 2 });
+  assert.strictEqual(s.risk_score, 100, `${s.risk_score}: ${s.risk_reasons.join('; ')}`);
+  assert.strictEqual(s.risk_level, 'HIGH');
+});
+
 console.log('03 Request AI');
 test('data pribadi tidak ikut terkirim ke AI', () => {
   const s = score('02-cod-besar.json');

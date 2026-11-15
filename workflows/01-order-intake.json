@@ -48,7 +48,7 @@
           },
           "conditions": [
             {
-              "id": "633ea343-50a3-4d1d-97e8-4b0460a17a84",
+              "id": "caabbfeb-90d4-4099-947b-c813d8dfb3f3",
               "leftValue": "={{ $json.valid }}",
               "rightValue": "",
               "operator": {
@@ -145,7 +145,7 @@
           },
           "conditions": [
             {
-              "id": "7f3f7903-1ac5-4e84-a1b6-075941628f98",
+              "id": "48b832cf-a81b-43bb-8059-57c12a321a3b",
               "leftValue": "={{ Number($json.exact_dup) }}",
               "rightValue": 0,
               "operator": {
@@ -210,7 +210,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Node: \"Skor Risiko\"  (Code node, mode: Run Once for All Items)\n// Input : output node \"Cek Riwayat\" (exact_dup, near_dup, prior_rejected, prior_ok)\n// Output: pesanan + skor risiko, level, alasan, tag klasifikasi, dan apakah perlu AI.\n// Semua aturan bersifat pasti (deterministik) supaya keputusan bisa dijelaskan dan diaudit.\n\nconst HIGH_VALUE = 5000000;   // pesanan bernilai besar\nconst COD_LIMIT = 1000000;    // COD di atas ini dianggap berisiko\nconst BULK_QTY = 10;          // qty per item yang dianggap borongan\nconst LEVEL_MEDIUM = 30;\nconst LEVEL_HIGH = 60;\nconst DISPOSABLE = ['mailinator.com', 'tempmail.com', '10minutemail.com', 'guerrillamail.com', 'yopmail.com', 'trashmail.com'];\n\nconst o = $('Normalisasi').first().json;\nconst h = $input.first().json;\nconst hist = {\n  near_dup: Number(h.near_dup) || 0,\n  prior_rejected: Number(h.prior_rejected) || 0,\n  prior_ok: Number(h.prior_ok) || 0,\n};\n\nconst reasons = [];\nconst add = (poin, teks) => reasons.push({ poin, teks });\n\nif (o.total >= HIGH_VALUE) add(30, 'Nilai pesanan besar');\nif (o.payment_method === 'cod' && o.total >= COD_LIMIT) add(25, 'COD bernilai besar');\nif (o.items.some((i) => i.qty >= BULK_QTY)) add(15, 'Jumlah per item tidak wajar');\nif (o.address.length < 15) add(15, 'Alamat terlalu pendek');\nif (!o.email) add(5, 'Tanpa email');\nelse if (DISPOSABLE.includes(o.email.split('@')[1])) add(15, 'Email sekali pakai');\n\nconst nama = o.customer_name.toLowerCase();\nif (/\\d/.test(nama) || /(.)\\1{3,}/.test(nama) || nama.replace(/\\s/g, '').length < 3 || /(asdf|qwer|test|tes123|xxx)/.test(nama)) {\n  add(15, 'Nama pelanggan mencurigakan');\n}\n\nif (o.items_subtotal > 0 && Math.abs(o.total - o.items_subtotal) / o.items_subtotal > 0.3) {\n  add(15, 'Total tidak sesuai rincian item');\n}\n\nif (hist.near_dup > 0) add(30, 'Pesanan serupa (HP dan total sama) dalam 30 menit');\nif (hist.prior_rejected > 0) add(25, 'Pelanggan pernah punya pesanan ditolak');\n\nconst jam = Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hourCycle: 'h23', timeZone: 'Asia/Jakarta' })\n  .format(new Date(o.ordered_at)));\nif (jam >= 0 && jam < 5) add(5, 'Dipesan dini hari');\n\nif (hist.prior_ok > 0) add(-10, 'Pelanggan lama dengan riwayat baik');\n\nconst score = Math.max(0, reasons.reduce((a, r) => a + r.poin, 0));\nconst level = score >= LEVEL_HIGH ? 'HIGH' : score >= LEVEL_MEDIUM ? 'MEDIUM' : 'LOW';\n\n// Klasifikasi pesanan\nconst tags = [];\nif (o.total >= HIGH_VALUE) tags.push('high_value');\nif (o.payment_method === 'cod') tags.push('cod');\nif (o.items.some((i) => i.qty >= BULK_QTY)) tags.push('bulk');\ntags.push(hist.prior_ok > 0 ? 'repeat_customer' : 'new_customer');\n\nreturn [{\n  json: {\n    ...o,\n    history: hist,\n    risk_score: score,\n    risk_level: level,\n    risk_reasons: reasons.map((r) => `${r.teks} (${r.poin > 0 ? '+' : ''}${r.poin})`),\n    tags,\n    needs_ai: level !== 'LOW', // AI hanya dipanggil untuk pesanan yang janggal, supaya hemat kuota\n  },\n}];\n"
+        "jsCode": "// Node: \"Skor Risiko\"  (Code node, mode: Run Once for All Items)\n// Input : output node \"Cek Riwayat\" (exact_dup, near_dup, prior_rejected, prior_ok)\n// Output: pesanan + skor risiko, level, alasan, tag klasifikasi, dan apakah perlu AI.\n// Semua aturan bersifat pasti (deterministik) supaya keputusan bisa dijelaskan dan diaudit.\n\nconst HIGH_VALUE = 5000000;   // pesanan bernilai besar\nconst COD_LIMIT = 1000000;    // COD di atas ini dianggap berisiko\nconst BULK_QTY = 10;          // qty per item yang dianggap borongan\nconst LEVEL_MEDIUM = 30;\nconst LEVEL_HIGH = 60;\nconst DISPOSABLE = ['mailinator.com', 'tempmail.com', '10minutemail.com', 'guerrillamail.com', 'yopmail.com', 'trashmail.com'];\n\nconst o = $('Normalisasi').first().json;\nconst h = $input.first().json;\nconst hist = {\n  near_dup: Number(h.near_dup) || 0,\n  prior_rejected: Number(h.prior_rejected) || 0,\n  prior_ok: Number(h.prior_ok) || 0,\n};\n\nconst reasons = [];\nconst add = (poin, teks) => reasons.push({ poin, teks });\n\nif (o.total >= HIGH_VALUE) add(30, 'Nilai pesanan besar');\nif (o.payment_method === 'cod' && o.total >= COD_LIMIT) add(25, 'COD bernilai besar');\nif (o.items.some((i) => i.qty >= BULK_QTY)) add(15, 'Jumlah per item tidak wajar');\nif (o.address.length < 15) add(15, 'Alamat terlalu pendek');\nif (!o.email) add(5, 'Tanpa email');\nelse if (DISPOSABLE.includes(o.email.split('@')[1])) add(15, 'Email sekali pakai');\n\nconst nama = o.customer_name.toLowerCase();\nif (/\\d/.test(nama) || /(.)\\1{3,}/.test(nama) || nama.replace(/\\s/g, '').length < 3 || /(asdf|qwer|test|tes123|xxx)/.test(nama)) {\n  add(15, 'Nama pelanggan mencurigakan');\n}\n\nif (o.items_subtotal > 0 && Math.abs(o.total - o.items_subtotal) / o.items_subtotal > 0.3) {\n  add(15, 'Total tidak sesuai rincian item');\n}\n\nif (hist.near_dup > 0) add(30, 'Pesanan serupa (HP dan total sama) dalam 30 menit');\nif (hist.prior_rejected > 0) add(25, 'Pelanggan pernah punya pesanan ditolak');\n\nconst jam = Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hourCycle: 'h23', timeZone: 'Asia/Jakarta' })\n  .format(new Date(o.ordered_at)));\nif (jam >= 0 && jam < 5) add(5, 'Dipesan dini hari');\n\nif (hist.prior_ok > 0) add(-10, 'Pelanggan lama dengan riwayat baik');\n\nconst score = Math.min(100, Math.max(0, reasons.reduce((a, r) => a + r.poin, 0))); // skala 0-100\nconst level = score >= LEVEL_HIGH ? 'HIGH' : score >= LEVEL_MEDIUM ? 'MEDIUM' : 'LOW';\n\n// Klasifikasi pesanan\nconst tags = [];\nif (o.total >= HIGH_VALUE) tags.push('high_value');\nif (o.payment_method === 'cod') tags.push('cod');\nif (o.items.some((i) => i.qty >= BULK_QTY)) tags.push('bulk');\ntags.push(hist.prior_ok > 0 ? 'repeat_customer' : 'new_customer');\n\nreturn [{\n  json: {\n    ...o,\n    history: hist,\n    risk_score: score,\n    risk_level: level,\n    risk_reasons: reasons.map((r) => `${r.teks} (${r.poin > 0 ? '+' : ''}${r.poin})`),\n    tags,\n    needs_ai: level !== 'LOW', // AI hanya dipanggil untuk pesanan yang janggal, supaya hemat kuota\n  },\n}];\n"
       },
       "id": "c3efbae5-69ec-4c18-97f8-042c87cb03f0",
       "name": "Skor Risiko",
@@ -231,7 +231,7 @@
           },
           "conditions": [
             {
-              "id": "c9396888-38c8-4acb-bfff-f7dacc62bd7c",
+              "id": "21c31cea-a2f7-4901-ae95-60cdcfb687c6",
               "leftValue": "={{ $json.needs_ai }}",
               "rightValue": "",
               "operator": {
@@ -376,7 +376,7 @@
           },
           "conditions": [
             {
-              "id": "ef6590b0-9dbc-4940-a651-57c03241436f",
+              "id": "3a53c786-4043-4c4b-bfee-6ff98e23559d",
               "leftValue": "={{ $('Tentukan Status').first().json.status }}",
               "rightValue": "PENDING_REVIEW",
               "operator": {
@@ -385,7 +385,7 @@
               }
             },
             {
-              "id": "103b68cb-3cda-4d4f-93bd-0d96e1d2fbe8",
+              "id": "5ff723e9-7877-4397-b6c2-8d6df17bb861",
               "leftValue": "={{ String($('Simpan Pesanan').first().json.id ?? '') }}",
               "rightValue": "",
               "operator": {

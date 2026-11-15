@@ -75,11 +75,11 @@ function interpret({ status, data }) {
     notes: [
       'masuk', 'lengkap',
       similar ? 'mirip' : (data.tags || []).includes('repeat_customer') ? 'pelanggan lama' : 'baru',
-      `${data.risk_score ?? 0} · ${LEVEL_ID[level]}`,
+      `${Math.min(100, Number(data.risk_score) || 0)} · ${LEVEL_ID[level]}`,
       verdict ? VERDICT_ID[verdict] || verdict : 'dilewati',
       pending ? 'ke owner' : 'otomatis',
     ],
-    score: data.risk_score ?? 0,
+    score: Math.min(100, Number(data.risk_score) || 0),
     level,
     reasons,
     statusLabel: pending ? 'Menunggu owner' : 'Disetujui otomatis',

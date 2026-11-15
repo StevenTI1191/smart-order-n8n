@@ -62,6 +62,12 @@ async function verifyTurnstile(env, token, ip) {
   return Boolean(out.success);
 }
 
+// Isi permintaan JSON; selain objek (null, array, teks rusak) dianggap kosong
+async function readBody(request) {
+  const b = await request.json().catch(() => null);
+  return b && typeof b === 'object' && !Array.isArray(b) ? b : {};
+}
+
 async function handleApi(request, env, ctx, url) {
   const path = url.pathname;
   const ip = request.headers.get('CF-Connecting-IP') || 'local';
@@ -76,13 +82,14 @@ async function handleApi(request, env, ctx, url) {
     const hit = await cache.match(cacheKey);
     if (hit) return hit;
     const { status, data } = await n8n(env, 'webhook/api/stats');
-    const res = json(data, status === 200 ? 200 : 502, status === 200 ? { 'Cache-Control': 'public, max-age=60' } : {});
-    if (status === 200) ctx.waitUntil(cache.put(cacheKey, res.clone()));
+    const good = status === 200 && data?.ok === true;
+    const res = json(data, good ? 200 : 502, good ? { 'Cache-Control': 'public, max-age=60' } : {});
+    if (good) ctx.waitUntil(cache.put(cacheKey, res.clone()));
     return res;
   }
 
   if (path === '/api/demo-order' && request.method === 'POST') {
-    const body = await request.json().catch(() => ({}));
+    const body = await readBody(request);
     if (!SCENARIO_KEYS.includes(body.scenario)) return json({ ok: false, error: 'Skenario tidak dikenal' }, 400);
     if (await limited(env.DEMO_LIMITER, `ip:${ip}`)) {
       return json({ ok: false, error: 'Terlalu sering. Coba lagi sekitar satu menit lagi.' }, 429);
@@ -109,9 +116,12 @@ async function handleApi(request, env, ctx, url) {
 
   // Form pesanan untuk pembeli (link yang dibagikan penjual di WhatsApp / Instagram)
   if (path === '/api/order' && request.method === 'POST') {
-    const body = await request.json().catch(() => ({}));
+    const body = await readBody(request);
     if (await limited(env.DEMO_LIMITER, `order:${ip}`)) {
       return json({ ok: false, error: 'Terlalu banyak pesanan dalam waktu singkat. Coba lagi sebentar.' }, 429);
+    }
+    if (await limited(env.DEMO_GLOBAL_LIMITER, 'global:order')) {
+      return json({ ok: false, error: 'Sedang banyak pesanan masuk. Coba lagi sebentar.' }, 429);
     }
     if (!(await verifyTurnstile(env, body.turnstileToken, ip))) {
       return json({ ok: false, error: 'Verifikasi anti-bot gagal. Muat ulang halaman lalu coba lagi.' }, 403);
@@ -167,7 +177,7 @@ async function handleApi(request, env, ctx, url) {
     }
 
     if (path === '/api/admin/decide' && request.method === 'POST') {
-      const body = await request.json().catch(() => ({}));
+      const body = await readBody(request);
       // Nama admin diambil dari login Access, bukan dari isi permintaan browser
       const { status, data } = await n8n(env, 'webhook/api/decide', {
         method: 'POST',
@@ -189,7 +199,7 @@ export default {
       } catch (err) {
         console.error(url.pathname, 'gagal:', err?.stack || err);
         // Kode singkat membantu owner mendiagnosis tanpa membuka log; tidak membocorkan isi secret
-        const code = err?.publicCode || (err?.name === 'TimeoutError' ? 'n8n_timeout' : 'n8n_unreachable');
+        const code = err?.publicCode || (err?.name === 'TimeoutError' ? 'n8n_timeout' : err?.name === 'TypeError' && /fetch|network/i.test(err.message) ? 'n8n_unreachable' : 'internal');
         return json({ ok: false, error: 'Server sedang bermasalah', code }, 502);
       }
     }

@@ -44,7 +44,7 @@ function view(o) {
     payment: paymentLabel(o.payment_method),
     items: items.map((i) => `${i.qty}× ${i.name}`).join(', ') || '-',
     level: o.risk_level || 'LOW',
-    score: Number(o.risk_score) || 0,
+    score: Math.min(100, Number(o.risk_score) || 0),
     status: o.status,
     by: byLabel(o.decided_by),
     time: time(o.created_at),

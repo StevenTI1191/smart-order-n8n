@@ -46,7 +46,7 @@ if (jam >= 0 && jam < 5) add(5, 'Dipesan dini hari');
 
 if (hist.prior_ok > 0) add(-10, 'Pelanggan lama dengan riwayat baik');
 
-const score = Math.max(0, reasons.reduce((a, r) => a + r.poin, 0));
+const score = Math.min(100, Math.max(0, reasons.reduce((a, r) => a + r.poin, 0))); // skala 0-100
 const level = score >= LEVEL_HIGH ? 'HIGH' : score >= LEVEL_MEDIUM ? 'MEDIUM' : 'LOW';
 
 // Klasifikasi pesanan

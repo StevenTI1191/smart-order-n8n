@@ -50,9 +50,11 @@ export default function OrderForm() {
     const add = (key, msg) => e.push({ key, msg });
     if (!chosen.length) add('items', 'Pilih minimal satu produk');
     if (form.name.trim().length < 2) add('name', 'Nama penerima belum diisi');
-    const digits = form.phone.replace(/\D/g, '');
+    let digits = form.phone.replace(/\D/g, '');
+    if (digits.startsWith('0')) digits = '62' + digits.slice(1);
+    else if (digits.startsWith('8')) digits = '62' + digits;
     if (!digits) add('phone', 'Nomor WhatsApp belum diisi');
-    else if (digits.length < 9 || digits.length > 15) add('phone', 'Nomor WhatsApp belum benar, contoh 081234567890');
+    else if (!/^628\d{7,11}$/.test(digits)) add('phone', 'Nomor WhatsApp belum benar, contoh 081234567890');
     if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) add('email', 'Format email belum benar');
     if (form.address.trim().length < 10) add('address', 'Tulis alamat lengkap: jalan, nomor rumah, RT/RW');
     if (!form.city.trim()) add('city', 'Kota belum diisi');
