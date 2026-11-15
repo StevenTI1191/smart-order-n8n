@@ -19,10 +19,10 @@ const S = {
     sim: { status: 200, data: { ok: true, status: 'APPROVED_AUTO', decided_by: 'ai', risk_score: 55, risk_level: 'MEDIUM', risk_reasons: ['Nilai pesanan besar (+30)', 'COD bernilai besar (+25)'], tags: ['high_value', 'cod', 'new_customer'], ai_verdict: 'APPROVE', ai_confidence: 0.82, ai_reason: 'Contoh jawaban: nilai dan barang wajar, alamat lengkap.' } },
   },
   suspicious: {
-    label: 'Mencurigakan', hint: 'Borongan, nama aneh, COD', short: '!', tone: 'tone-bad',
-    f: { name: 'Test Test', phone: '0812-9999-0000', email: 'x@mailinator.com', city: 'Jakarta', address: 'jl a', payment: 'COD', total: 2100000,
+    label: 'Mencurigakan', hint: 'Borongan, alamat asal, COD', short: '!', tone: 'tone-bad',
+    f: { name: 'Dimas Prasetyo', phone: '0812-9999-0000', email: 'x@mailinator.com', city: 'Jakarta', address: 'jl a', payment: 'COD', total: 2100000,
       items: [{ qty: 12, name: 'Power Bank 20.000 mAh', price: 175000 }] },
-    sim: { status: 200, data: { ok: true, status: 'PENDING_REVIEW', decided_by: 'system', risk_score: 85, risk_level: 'HIGH', risk_reasons: ['COD bernilai besar (+25)', 'Jumlah per item tidak wajar (+15)', 'Alamat terlalu pendek (+15)', 'Email sekali pakai (+15)', 'Nama pelanggan mencurigakan (+15)'], tags: ['cod', 'bulk', 'new_customer'], ai_verdict: 'REVIEW', ai_confidence: 0.74, ai_reason: 'Contoh jawaban: nama dan alamat tidak wajar, barang borongan dengan COD.' } },
+    sim: { status: 200, data: { ok: true, status: 'PENDING_REVIEW', decided_by: 'system', risk_score: 70, risk_level: 'HIGH', risk_reasons: ['COD bernilai besar (+25)', 'Jumlah per item tidak wajar (+15)', 'Alamat terlalu pendek (+15)', 'Email sekali pakai (+15)'], tags: ['cod', 'bulk', 'new_customer'], ai_verdict: 'REVIEW', ai_confidence: 0.74, ai_reason: 'Contoh jawaban: alamat tidak lengkap dan email sekali pakai untuk pesanan borongan COD.' } },
   },
   invalid: {
     label: 'Data rusak', hint: 'HP salah, item kosong', short: '×', tone: 'tone-bad',
