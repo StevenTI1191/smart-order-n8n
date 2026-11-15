@@ -13,25 +13,24 @@ export const rpShort = (n) => {
 export const initials = (name = '') =>
   name.trim().split(/\s+/).map((w) => w.charAt(0)).join('').slice(0, 2).toUpperCase() || '?';
 
-const PALETTE = [['rgba(92,198,220,0.072)', '#8AD6E6'], ['rgba(142,155,230,0.096)', '#A5B4FC'], ['rgba(95,196,154,0.072)', '#8ED6B5'], ['rgba(226,181,86,0.072)', '#EACB82']];
+const PALETTE = [['#DDF2F8', '#0E5F75'], ['#E9EEF9', '#2C467F'], ['#E7F4EC', '#146C43'], ['#FFF0D9', '#8A4B00']];
 export const palette = (name = '') => {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h + name.charCodeAt(i)) % PALETTE.length;
   return PALETTE[h];
 };
 
-export const LEVEL_COLOR = { LOW: '#5FC49A', MEDIUM: '#E2B556', HIGH: '#E08294' };
+export const LEVEL_COLOR = { LOW: '#2E8A5E', MEDIUM: '#D99A2B', HIGH: '#B3261E' };
 export const LEVEL_ID = { LOW: 'Rendah', MEDIUM: 'Sedang', HIGH: 'Tinggi' };
 export const VERDICT_ID = { APPROVE: 'Setuju', REVIEW: 'Perlu dicek', REJECT: 'Tolak' };
 export const TAG_ID = { new_customer: 'Pelanggan baru', repeat_customer: 'Pelanggan lama', high_value: 'Nilai besar', cod: 'COD', bulk: 'Borongan' };
-export const TRACK = 'rgba(148,163,184,.16)';
 export const LEVEL_TONE = { LOW: 'tone-good', MEDIUM: 'tone-warn', HIGH: 'tone-bad' };
 
 export const STATUS = {
-  APPROVED_AUTO: { label: 'Otomatis', tone: 'tone-good', color: '#5FC49A' },
-  APPROVED_MANUAL: { label: 'Disetujui owner', tone: 'tone-info', color: '#5CC6DC' },
-  PENDING_REVIEW: { label: 'Menunggu', tone: 'tone-warn', color: '#E2B556' },
-  REJECTED: { label: 'Ditolak', tone: 'tone-bad', color: '#E08294' },
+  APPROVED_AUTO: { label: 'Otomatis', tone: 'tone-good', color: '#2E8A5E' },
+  APPROVED_MANUAL: { label: 'Disetujui owner', tone: 'tone-info', color: '#67C3D9' },
+  PENDING_REVIEW: { label: 'Menunggu', tone: 'tone-warn', color: '#D99A2B' },
+  REJECTED: { label: 'Ditolak', tone: 'tone-bad', color: '#B3261E' },
 };
 
 // decided_by di database -> teks yang mudah dibaca

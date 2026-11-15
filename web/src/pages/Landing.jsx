@@ -37,7 +37,7 @@ export default function Landing() {
   const riskMax = Math.max(1, stats.risk_low + stats.risk_medium + stats.risk_high);
 
   return (
-    <div className="neon" style={{ position: 'relative', overflowX: 'clip' }}>
+    <div className="theme-tech" style={{ position: 'relative', overflowX: 'clip' }}>
       <header className="site-header">
         <div className="wrap">
           <Logo href="#atas" />
@@ -52,8 +52,8 @@ export default function Landing() {
       </header>
 
       <section id="atas" className="hero">
-        <div className="glow" aria-hidden="true" style={{ width: 640, height: 640, right: -140, top: -220, background: 'radial-gradient(circle, rgba(92,198,220,0.12) 0%, rgba(5,8,15,0) 68%)' }} />
-        <div className="glow" aria-hidden="true" style={{ width: 520, height: 520, left: '38%', top: 220, background: 'radial-gradient(circle, rgba(164,151,227,0.096) 0%, rgba(5,8,15,0) 68%)' }} />
+        <div className="glow" aria-hidden="true" style={{ width: 640, height: 640, right: -140, top: -220, background: 'radial-gradient(circle, #BAE6FD 0%, rgba(255,255,255,0) 70%)' }} />
+        <div className="glow" aria-hidden="true" style={{ width: 520, height: 520, left: '38%', top: 220, background: 'radial-gradient(circle, #C7F0E8 0%, rgba(255,255,255,0) 70%)' }} />
         <div className="wrap">
           <div className="hero-copy">
             <span className="badge-new"><i aria-hidden="true" />AI agent untuk toko online</span>
@@ -64,15 +64,15 @@ export default function Landing() {
               <a className="btn btn-lg" href="/pesan"><Icon name="send" />Lihat form pesanan</a>
             </div>
             <div className="checks">
-              <span><Icon name="check" size={16} stroke={2.4} color="#5FC49A" />Data pribadi tidak dikirim ke AI</span>
-              <span><Icon name="check" size={16} stroke={2.4} color="#5FC49A" />Setiap keputusan tercatat</span>
+              <span><Icon name="check" size={16} stroke={2.4} color="#0E7490" />Data pribadi tidak dikirim ke AI</span>
+              <span><Icon name="check" size={16} stroke={2.4} color="#0E7490" />Setiap keputusan tercatat</span>
             </div>
           </div>
 
           <div className="hero-shot" aria-hidden="true">
             <div className="browser">
               <div className="browser-bar">
-                <i style={{ background: '#E08294' }} /><i style={{ background: '#E2B556' }} /><i style={{ background: '#5FC49A' }} />
+                <i style={{ background: '#F2A99F' }} /><i style={{ background: '#F4D38A' }} /><i style={{ background: '#9ED9B4' }} />
                 <span className="browser-url">Dashboard admin</span>
               </div>
               <div className="browser-body">
@@ -81,9 +81,9 @@ export default function Landing() {
                   <div className="mini-stat"><div>Menunggu</div><div>2</div></div>
                   <div className="mini-stat"><div>Disetujui</div><div>Rp7,9 jt</div></div>
                 </div>
-                <div className="mini-order warn">
+                <div className="mini-order">
                   <div className="row">
-                    <span className="avatar" style={{ width: 40, height: 40, fontSize: 14, background: 'rgba(226,181,86,0.072)', color: '#EACB82', border: '1px solid rgba(226,181,86,0.3)' }}>AP</span>
+                    <span className="avatar" style={{ width: 40, height: 40, fontSize: 14, background: '#FFF0D9', color: '#8A4B00' }}>AP</span>
                     <div className="grow"><div className="mini-name">Andi Pratama · ORD-1003</div><div className="mini-sub">12× Power Bank · COD · Rp2.100.000</div></div>
                     <span className="pill tone-warn">Sedang · 55</span>
                   </div>
@@ -92,11 +92,11 @@ export default function Landing() {
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <span className="fake-btn" style={{ flex: 1, border: '1px solid var(--line-2)', color: 'var(--bad)' }}>Reject</span>
-                    <span className="fake-btn" style={{ flex: 2, background: 'var(--grad)', color: '#04131A' }}>Approve</span>
+                    <span className="fake-btn" style={{ flex: 2, background: 'var(--grad)', color: '#fff' }}>Approve</span>
                   </div>
                 </div>
                 <div className="mini-order" style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <span className="avatar" style={{ width: 40, height: 40, fontSize: 14, background: 'rgba(95,196,154,0.072)', color: '#8ED6B5', border: '1px solid rgba(95,196,154,0.3)' }}>SD</span>
+                  <span className="avatar" style={{ width: 40, height: 40, fontSize: 14, background: '#E7F4EC', color: '#146C43' }}>SD</span>
                   <div className="grow"><div className="mini-name">Sari Dewi · #1005</div><div className="mini-sub">4× Kaos Polos Hitam · Rp320.000</div></div>
                   <span className="pill tone-good">Otomatis</span>
                 </div>
@@ -172,19 +172,19 @@ export default function Landing() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap' }}>
               <Donut size={150} r={54} stroke={18} total={stats.total}
                 label={`${stats.auto_approved} otomatis, ${stats.approved_manual} disetujui owner, ${stats.pending} menunggu, ${stats.rejected} ditolak`}
-                segments={[{ value: stats.auto_approved, color: '#5FC49A' }, { value: stats.approved_manual, color: '#5CC6DC' }, { value: stats.pending, color: '#E2B556' }, { value: stats.rejected, color: '#E08294' }]} />
+                segments={[{ value: stats.auto_approved, color: '#2E8A5E' }, { value: stats.approved_manual, color: '#2563EB' }, { value: stats.pending, color: '#D99A2B' }, { value: stats.rejected, color: '#B3261E' }]} />
               <div className="legend">
-                <div><i style={{ background: '#5FC49A' }} />Disetujui otomatis <strong>{stats.auto_approved} · {pct(stats.auto_approved)}%</strong></div>
-                <div><i style={{ background: '#5CC6DC' }} />Disetujui owner <strong>{stats.approved_manual}</strong></div>
-                <div><i style={{ background: '#E2B556' }} />Menunggu <strong>{stats.pending}</strong></div>
-                <div><i style={{ background: '#E08294' }} />Ditolak <strong>{stats.rejected}</strong></div>
+                <div><i style={{ background: '#2E8A5E' }} />Disetujui otomatis <strong>{stats.auto_approved} · {pct(stats.auto_approved)}%</strong></div>
+                <div><i style={{ background: '#2563EB' }} />Disetujui owner <strong>{stats.approved_manual}</strong></div>
+                <div><i style={{ background: '#D99A2B' }} />Menunggu <strong>{stats.pending}</strong></div>
+                <div><i style={{ background: '#B3261E' }} />Ditolak <strong>{stats.rejected}</strong></div>
               </div>
             </div>
           </div>
           <div className="card stat-card">
             <h3 style={{ fontSize: 17, fontWeight: 700 }}>Level risiko</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {[['Rendah', stats.risk_low, '#5FC49A'], ['Sedang', stats.risk_medium, '#E2B556'], ['Tinggi', stats.risk_high, '#E08294']].map(([l, n, c]) => (
+              {[['Rendah', stats.risk_low, '#2E8A5E'], ['Sedang', stats.risk_medium, '#D99A2B'], ['Tinggi', stats.risk_high, '#B3261E']].map(([l, n, c]) => (
                 <div key={l} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}><span>{l}</span><strong>{n}</strong></div>
                   <Bar value={n} max={riskMax} color={c} />
@@ -197,13 +197,14 @@ export default function Landing() {
 
       <section className="wrap" aria-label="Ajakan" style={{ paddingBottom: 72 }}>
         <div className="cta">
+          <div className="glow" aria-hidden="true" style={{ width: 420, height: 420, right: -120, top: -160, background: 'radial-gradient(circle, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 70%)' }} />
           <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 620 }}>
             <h2>Berhenti cek pesanan satu per satu</h2>
-            <p style={{ fontSize: 17, color: 'var(--ink-2)' }}>Biarkan Smart Order menyaring pesanan, dan fokuslah pada yang benar-benar perlu keputusanmu.</p>
+            <p style={{ fontSize: 17, color: '#E3F1F7' }}>Biarkan Smart Order menyaring pesanan, dan fokuslah pada yang benar-benar perlu keputusanmu.</p>
           </div>
           <div style={{ position: 'relative', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <a className="btn btn-primary btn-lg" href="#demo">Coba demo</a>
-            <a className="btn btn-lg" href="/admin">Lihat dashboard</a>
+            <a className="btn btn-lg" href="#demo" style={{ border: 0, color: 'var(--teal-ink)', fontWeight: 800 }}>Coba demo</a>
+            <a className="btn btn-lg" href="/admin" style={{ background: 'transparent', borderColor: 'rgba(255,255,255,.55)', color: '#fff' }}>Lihat dashboard</a>
           </div>
         </div>
       </section>

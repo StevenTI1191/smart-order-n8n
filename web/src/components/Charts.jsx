@@ -1,6 +1,6 @@
 // Grafik kecil berbasis SVG: cincin skor dan donut status
 
-export function Ring({ size = 128, r = 54, stroke = 12, value = 0, color, track = 'rgba(148,163,184,.16)', label, children }) {
+export function Ring({ size = 128, r = 54, stroke = 12, value = 0, color, track = '#E6EBEF', label, children }) {
   const C = 2 * Math.PI * r;
   const vb = (r + stroke / 2 + 4) * 2;
   const c = vb / 2;
@@ -27,7 +27,7 @@ export function Donut({ size = 128, r = 48, stroke = 16, segments, total, label,
   return (
     <div className="gauge" style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${vb} ${vb}`} role="img" aria-label={label}>
-        <circle cx={c} cy={c} r={r} fill="none" stroke="rgba(148,163,184,.16)" strokeWidth={stroke} />
+        <circle cx={c} cy={c} r={r} fill="none" stroke="#F1F5F8" strokeWidth={stroke} />
         {sum > 0 && segments.map((s, i) => {
           const len = (C * s.value) / sum;
           const el = s.value > 0 ? (
@@ -47,7 +47,7 @@ export function Donut({ size = 128, r = 48, stroke = 16, segments, total, label,
   );
 }
 
-export function Bar({ value, max, color, height = 10, track = 'rgba(148,163,184,.16)' }) {
+export function Bar({ value, max, color, height = 10, track = '#F1F5F8' }) {
   const pct = max ? Math.round((value / max) * 100) : 0;
   return (
     <div style={{ height, borderRadius: 999, background: track, overflow: 'hidden' }}>

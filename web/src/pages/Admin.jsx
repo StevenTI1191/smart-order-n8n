@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Icon, { Logo } from '../components/Icons.jsx';
 import { Ring, Donut } from '../components/Charts.jsx';
 import { api } from '../lib/api.js';
-import { rp, rpShort, initials, palette, LEVEL_COLOR, LEVEL_TONE, LEVEL_ID, TRACK, VERDICT_ID, STATUS, byLabel, parseReason, time, confidence, paymentLabel } from '../lib/format.js';
+import { rp, rpShort, initials, palette, LEVEL_COLOR, LEVEL_TONE, LEVEL_ID, VERDICT_ID, STATUS, byLabel, parseReason, time, confidence, paymentLabel } from '../lib/format.js';
 
 const UNDO_SECONDS = 5;
 
@@ -28,7 +28,7 @@ const ACTION_TEXT = {
   APPROVED_AUTO: 'disetujui otomatis', APPROVED_MANUAL: 'disetujui owner', PENDING_REVIEW: 'masuk antrian review',
   REJECTED: 'ditolak', DUPLICATE: 'terkirim ulang, diabaikan', INVALID: 'ditolak karena data rusak',
 };
-const DOT = { REJECTED: '#E08294', INVALID: '#E08294', PENDING_REVIEW: '#E2B556', DUPLICATE: '#E2B556', APPROVED_MANUAL: '#5CC6DC' };
+const DOT = { REJECTED: '#B3261E', INVALID: '#B3261E', PENDING_REVIEW: '#D99A2B', DUPLICATE: '#D99A2B', APPROVED_MANUAL: '#67C3D9' };
 
 // Baris database -> bentuk untuk tampilan
 function view(o) {
@@ -176,12 +176,12 @@ export default function Admin() {
   const today = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
 
   if (mode === 'loading') {
-    return <div className="gate neon"><div className="skeleton" style={{ width: 320, height: 160 }} /></div>;
+    return <div className="gate"><div className="skeleton" style={{ width: 320, height: 160 }} /></div>;
   }
 
   const C22 = 2 * Math.PI * 22;
   return (
-    <div className="admin neon">
+    <div className="admin theme-tech">
       <aside className="side" aria-label="Navigasi admin">
         <Logo sub="Admin Center" href="/" />
         <nav className="side-nav">
@@ -195,13 +195,13 @@ export default function Admin() {
           {mode === 'demo' ? (
             <div className="demo-card">
               <span style={{ fontWeight: 700 }}>Mode demo</span>
-              <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>Kamu melihat data contoh. Keputusan tidak disimpan.</span>
+              <span style={{ fontSize: 13, color: '#E3F1F7' }}>Kamu melihat data contoh. Keputusan tidak disimpan.</span>
               <a href="/api/admin/login">Masuk sebagai admin</a>
             </div>
           ) : (
             <div className="demo-card">
               <span style={{ fontWeight: 700 }}>Link form pesanan</span>
-              <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>Bagikan di WhatsApp atau bio Instagram. Pesanan yang masuk langsung diperiksa.</span>
+              <span style={{ fontSize: 13, color: '#E3F1F7' }}>Bagikan di WhatsApp atau bio Instagram. Pesanan yang masuk langsung diperiksa.</span>
               <button type="button" onClick={copyFormLink}>{copied ? 'Link disalin' : 'Salin link'}</button>
             </div>
           )}
@@ -220,7 +220,7 @@ export default function Admin() {
               <a className="icon-btn" href="#antrian" aria-label={`${pend} pesanan menunggu keputusan`}><Icon name="bell" />{pend > 0 && <span className="dot" />}</a>
               {mode === 'live' && <button type="button" className="icon-btn" aria-label="Muat ulang" onClick={load}><Icon name="refresh" /></button>}
               <div className="who">
-                <div className="avatar" style={{ width: 38, height: 38, fontSize: 14, background: 'rgba(92,198,220,0.084)', color: '#8AD6E6', border: '1px solid rgba(92,198,220,0.3)' }}>{mode === 'live' ? initials(email.split('@')[0]) : 'D'}</div>
+                <div className="avatar" style={{ width: 38, height: 38, fontSize: 14, background: 'var(--grad)', color: '#fff' }}>{mode === 'live' ? initials(email.split('@')[0]) : 'D'}</div>
                 <div className="who-name hide-sm">
                   <b>{mode === 'live' ? email : 'Pengunjung'}</b>
                   {mode === 'live' ? <a href="/cdn-cgi/access/logout" style={{ fontSize: 11 }}>Keluar</a> : <small>mode demo</small>}
@@ -255,20 +255,20 @@ export default function Admin() {
           </section>
 
           <section aria-label="Ringkasan" className="kpis">
-            <Kpi title="Menunggu review" icon="clock" tone="tone-warn" value={pend} bar={pct(pend)} color="#E2B556" />
-            <Kpi title="Disetujui otomatis" icon="spark" tone="tone-good" value={<>{auto} <span style={{ fontSize: 16, color: 'var(--muted)', fontWeight: 600 }}>{pct(auto)}%</span></>} bar={pct(auto)} color="#5FC49A" />
-            <Kpi title="Diputuskan owner" icon="user" tone="tone-info" value={am + rej} bar={pct(am + rej)} color="#5CC6DC" />
+            <Kpi title="Menunggu review" icon="clock" tone="tone-warn" value={pend} bar={pct(pend)} color="#D99A2B" />
+            <Kpi title="Disetujui otomatis" icon="spark" tone="tone-good" value={<>{auto} <span style={{ fontSize: 16, color: 'var(--muted)', fontWeight: 600 }}>{pct(auto)}%</span></>} bar={pct(auto)} color="#2E8A5E" />
+            <Kpi title="Diputuskan owner" icon="user" tone="tone-info" value={am + rej} bar={pct(am + rej)} color="#0E7490" />
             <div className="kpi dark">
-              <div className="kpi-head"><span>Nilai disetujui</span><div className="kpi-icon" style={{ background: 'rgba(92,198,220,0.072)', color: '#8AD6E6' }}><Icon name="trend" /></div></div>
+              <div className="kpi-head"><span>Nilai disetujui</span><div className="kpi-icon" style={{ background: 'rgba(255,255,255,.1)', color: '#7CC6E0' }}><Icon name="trend" /></div></div>
               <span style={{ fontSize: 'clamp(18px, 4vw, 30px)', fontWeight: 800, letterSpacing: '-.03em', lineHeight: 1.1, whiteSpace: 'nowrap' }} title={rp(value)}>{value >= 10_000_000 ? rpShort(value) : rp(value)}</span>
-              <span style={{ fontSize: 13, color: 'var(--muted)' }}>dari {total} pesanan</span>
+              <span style={{ fontSize: 13, color: '#A9BAC6' }}>dari {total} pesanan</span>
             </div>
           </section>
 
           {toast && (
             <div role="status" className={`toast so-fade ${toast.error ? 'error' : ''}`}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Icon name={toast.error ? 'alert' : 'check'} stroke={2.2} color={toast.error ? '#EDA9B5' : '#8ED6B5'} />{toast.text}
+                <Icon name={toast.error ? 'alert' : 'check'} stroke={2.2} color={toast.error ? '#F6B4A8' : '#9FD8B8'} />{toast.text}
               </span>
               {toast.undo && pendingRef.current
                 ? <button type="button" onClick={undo}>Batalkan{countdown ? ` (${countdown})` : ''}</button>
@@ -304,7 +304,7 @@ export default function Admin() {
                         </div>
                         <div style={{ fontSize: 14, color: 'var(--ink-2)' }}>{o.items}</div>
                       </div>
-                      <Ring size={56} r={22} stroke={6} value={o.score} color={LEVEL_COLOR[o.level]} track={TRACK} label={`Skor risiko ${o.score}`}>
+                      <Ring size={56} r={22} stroke={6} value={o.score} color={LEVEL_COLOR[o.level]} track="#F1F5F8" label={`Skor risiko ${o.score}`}>
                         <span style={{ fontWeight: 800, fontSize: 15 }}>{o.score}</span>
                       </Ring>
                     </div>
@@ -347,7 +347,7 @@ export default function Admin() {
                   {feed.length === 0 && <span className="muted">Belum ada aktivitas.</span>}
                   {feed.map((e, i) => (
                     <div key={(e.key || e.created_at) + e.order_id + i} className="feed-item so-fade">
-                      <div className="feed-dot" style={{ background: DOT[e.action] || '#5FC49A' }} />
+                      <div className="feed-dot" style={{ background: DOT[e.action] || '#2E8A5E' }} />
                       <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                         <span style={{ fontSize: 14 }}><strong>{e.order_id}</strong> {ACTION_TEXT[e.action] || e.action.toLowerCase()}</span>
                         <span style={{ fontSize: 12, color: 'var(--muted)', overflowWrap: 'anywhere' }}>{byLabel(e.actor)} · {time(e.created_at)}</span>
@@ -381,7 +381,7 @@ export default function Admin() {
                         <td><div className="row" style={{ gap: 10 }}><div className="avatar" style={{ width: 32, height: 32, fontSize: 12, background: bg, color: fg }}>{initials(o.customer)}</div><span style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{o.customer}</span></div></td>
                         <td className="td-order"><span>{o.items}</span><small>{o.id} · {o.time}</small></td>
                         <td className="num">{o.total}</td>
-                        <td className="td-risk"><div className="row" style={{ gap: 8 }}><div style={{ width: 56, height: 6, borderRadius: 999, background: TRACK, overflow: 'hidden' }}><div style={{ height: '100%', borderRadius: 999, background: LEVEL_COLOR[o.level], width: Math.max(4, Math.min(100, o.score)) + '%' }} /></div><span style={{ fontSize: 13, fontWeight: 600 }}>{o.score}</span><span className="lvl">{LEVEL_ID[o.level]}</span></div></td>
+                        <td className="td-risk"><div className="row" style={{ gap: 8 }}><div style={{ width: 56, height: 6, borderRadius: 999, background: '#F1F5F8', overflow: 'hidden' }}><div style={{ height: '100%', borderRadius: 999, background: LEVEL_COLOR[o.level], width: Math.max(4, Math.min(100, o.score)) + '%' }} /></div><span style={{ fontSize: 13, fontWeight: 600 }}>{o.score}</span><span className="lvl">{LEVEL_ID[o.level]}</span></div></td>
                         <td><span className={`pill ${st.tone}`}>{st.label}</span></td>
                         <td className="td-by">{o.by}</td>
                       </tr>
@@ -402,7 +402,7 @@ function Kpi({ title, icon, tone, value, bar, color }) {
     <div className="card kpi">
       <div className="kpi-head"><span>{title}</span><div className={`kpi-icon ${tone}`}><Icon name={icon} /></div></div>
       <span className="kpi-value">{value}</span>
-      <div style={{ height: 6, borderRadius: 999, background: TRACK, overflow: 'hidden' }}><div style={{ height: '100%', borderRadius: 999, background: color, width: bar + '%', transition: 'width .4s ease' }} /></div>
+      <div style={{ height: 6, borderRadius: 999, background: '#F1F5F8', overflow: 'hidden' }}><div style={{ height: '100%', borderRadius: 999, background: color, width: bar + '%', transition: 'width .4s ease' }} /></div>
     </div>
   );
 }

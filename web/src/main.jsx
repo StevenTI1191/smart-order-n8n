@@ -13,8 +13,6 @@ const PAGES = {
 };
 const [Page, title] = PAGES[path] || [Landing, 'Smart Order – AI agent pemeriksa pesanan'];
 document.title = title;
-// Halaman depan dan admin bertema neon gelap; form pesanan untuk pembeli tetap terang
-if (Page !== OrderForm) document.body.classList.add('neon-body');
 
 createRoot(document.getElementById('root')).render(
   <StrictMode><Page /></StrictMode>,
